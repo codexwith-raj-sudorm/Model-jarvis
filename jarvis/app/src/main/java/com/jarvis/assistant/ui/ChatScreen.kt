@@ -420,14 +420,13 @@ private fun ArcReactor(active: Boolean, speaking: Boolean, generating: Boolean) 
             modifier = Modifier
                 .size(148.dp * scale)
                 .clip(CircleShape)
-                .background(Color.Transparent)
-                .arcBorder(ringColor)
+                .border(3.dp, ringColor, CircleShape)
         )
         Box(
             modifier = Modifier
                 .size(88.dp)
                 .clip(CircleShape)
-                .arcBorder(ringColor.copy(alpha = 0.7f))
+                .border(2.dp, ringColor.copy(alpha = 0.7f), CircleShape)
         )
         Box(
             modifier = Modifier
@@ -436,25 +435,4 @@ private fun ArcReactor(active: Boolean, speaking: Boolean, generating: Boolean) 
                 .background(ringColor.copy(alpha = 0.85f))
         )
     }
-}
-
-/** Draw a circle border without import gymnastics (Box + drawBehind). */
-private fun Modifier.arcBorder(color: Color): Modifier = this.then(
-    Modifier.background(color = Color.Transparent)
-).then(
-    Modifier.padding(0.dp)
-).then(
-    Modifier
-        .clip(CircleShape)
-        .then(Modifier)
-).then(
-    Modifier.borderCircle(color)
-)
-
-@Composable
-private fun Modifier.borderCircle(color: Color): Modifier {
-    // Compose foundation has no standalone "border" modifier import-free
-    // shortcut for circles in this codebase's import set — use background
-    // layered approach instead in ArcReactor callers.
-    return this
 }

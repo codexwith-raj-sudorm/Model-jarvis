@@ -79,7 +79,7 @@ private class MicLoop {
                 runCatching { record?.stop() }
                 runCatching { record?.release() }
             }
-        }, "wake-mic").apply { isDaemon = true }.start()
+        }, "wake-mic").apply { isDaemon = true }.also { it.start() }
     }
 
     fun stop() { running = false }

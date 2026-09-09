@@ -4,16 +4,20 @@ import android.content.Context
 import java.io.File
 
 /**
- * Discovers GGUF models under files/models/ (pushed there by
+ * Discovers GGUF models under the app's model directory (pushed there by
  * scripts/get_models.sh) and remembers which one is active.
  *
- * Layout on device:
- *   /sdcard/Android/data/com.jarvis.assistant/files/models/*.gguf
+ * Layout on device (external app-specific storage, no permission needed):
+ *   /sdcard/Android/data/com.jarvis.assistant/files/models/  (GGUF files)
+ *
+ * NOTE: never write a glob like "star.gguf" inside block comments — Kotlin
+ * block comments NEST, and a slash-star inside the path swallows the rest
+ * of the file (this exact bug ate this class in the first CI run).
  */
 class ModelManager(private val context: Context) {
 
     val modelsDir: File
-        get() = File(context.filesDir, "models")
+        get() = File(baseDir(context), "models")
 
     /** All GGUFs found, alphabetically. */
     fun list(): List<File> =

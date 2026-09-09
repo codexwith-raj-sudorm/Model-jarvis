@@ -37,10 +37,11 @@
             </intent-filter>
         </activity>
 
-        <!-- Voice-first overlay summoned by the assistant gesture / QS tile -->
+        <!-- Voice-first overlay summoned by the assistant gesture / QS tile / wake word -->
         <activity
             android:name=".assistant.AssistantActivity"
             android:excludeFromRecents="true"
+            android:launchMode="singleTask"
             android:taskAffinity=""
             android:theme="@style/Theme.Jarvis.Assistant" />
 
