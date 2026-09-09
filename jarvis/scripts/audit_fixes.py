@@ -97,6 +97,18 @@ FIXES = [
      "C4 downloader wired"),
     ("ui/ChatScreen.kt", "ModelDownloadDialog(onDismiss",
      "C4 dialog reachable from model menu"),
+
+    # Phase C5 — citations & fetch log
+    ("agent/Orchestrator.kt", "toolsFired.add(call.name)",
+     "C5 tool tracking in the agent loop"),
+    ("agent/Orchestrator.kt", "source = toolsFired.takeIf",
+     "C5 answer carries its tool citations"),
+    ("ui/ChatScreen.kt", "via ${msg.source}",
+     "C5 citation chips on bubbles"),
+    ("ui/ChatScreen.kt", "FetchLogSheet",
+     "C5 fetch-log sheet exists"),
+    ("web/WebFetcher.kt", "fun accessSnapshot",
+     "C5 fetch-log data source"),
 ]
 
 # Patterns that must NOT be present (regression tripwires)

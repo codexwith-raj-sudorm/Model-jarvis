@@ -98,6 +98,7 @@ private fun FullChatContent(
     var input by remember { mutableStateOf("") }
     var modelMenuOpen by remember { mutableStateOf(false) }
     var showDownloader by remember { mutableStateOf(false) }
+    var showFetchLog by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
 
     // keep the newest content on screen
@@ -119,6 +120,12 @@ private fun FullChatContent(
                     color = MaterialTheme.colorScheme.primary,
                 )
                 Spacer(Modifier.weight(1f))
+                TextButton(onClick = { showFetchLog = true }) {
+                    Text(
+                        "🛰",
+                        style = MaterialTheme.typography.labelMedium,
+                    )
+                }
                 TextButton(onClick = { modelMenuOpen = true }) {
                     Text(
                         ui.modelName ?: "no model",
@@ -244,6 +251,70 @@ private fun FullChatContent(
         if (showDownloader) {
             ModelDownloadDialog(onDismiss = { showDownloader = false })
         }
+
+        // ---- fetch log (privacy contract, made visible) ----
+        if (showFetchLog) {
+            FetchLogSheet(onDismiss = { showFetchLog = false })
+        }
+    }
+}
+
+/** Every URL JARVIS has fetched — the visible half of the privacy contract. */
+@Composable
+private fun FetchLogSheet(onDismiss: () -> Unit) {
+    val entries = ServiceLocator.web.accessSnapshot()
+    val timeFmt = java.text.SimpleDateFormat("d MMM HH:mm", java.util.Locale.ENGLISH)
+
+    androidx.compose.material3.ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(Modifier.padding(horizontal = 20.dp)) {
+            Text(
+                "What left the phone",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                "Every URL JARVIS fetched this session (newest last). " +
+                    "Wake word, speech and the LLM never touch the network.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(12.dp))
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.height(320.dp),
+            ) {
+                if (entries.isEmpty()) {
+                    item {
+                        Text(
+                            "nothing yet — offline or no web tools used",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+                items(entries) { e ->
+                    val host = try {
+                        android.net.Uri.parse(e.url).host ?: e.url
+                    } catch (_: Exception) {
+                        e.url
+                    }
+                    Column {
+                        Text(
+                            host,
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                        Text(
+                            "${timeFmt.format(java.util.Date(e.timestamp))} · " +
+                                "${if (e.fromCache) "from cache" else "network"} · " +
+                                "${e.bytes / 1024} KB",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.height(20.dp))
+        }
     }
 }
 
@@ -346,12 +417,13 @@ private fun MessageBubble(msg: ChatMessage, streaming: Boolean = false) {
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.End,
     ) {
-        SelectionContainer {
-            Text(
-                text = msg.content + if (streaming) " ▍" else "",
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (isUser) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier
+        Column(horizontalAlignment = Alignment.End) {
+            SelectionContainer {
+                Text(
+                    text = msg.content + if (streaming) " ▍" else "",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (isUser) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier
                     .widthIn(max = 320.dp)
                     .clip(
                         RoundedCornerShape(
@@ -366,7 +438,18 @@ private fun MessageBubble(msg: ChatMessage, streaming: Boolean = false) {
                         else MaterialTheme.colorScheme.surface
                     )
                     .padding(horizontal = 14.dp, vertical = 10.dp),
-            )
+                )
+            }
+
+            // citation chip: which tools produced this answer
+            if (!streaming && !msg.source.isNullOrBlank() && msg.role == Role.ASSISTANT) {
+                Text(
+                    "via ${msg.source}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 2.dp, end = 4.dp),
+                )
+            }
         }
     }
 }
