@@ -1,6 +1,7 @@
 package com.jarvis.assistant.speech
 
 import android.content.Context
+import com.jarvis.assistant.llm.VoicePackManager
 import com.k2fsa.sherpa.onnx.OfflineTts
 import com.k2fsa.sherpa.onnx.OfflineTtsConfig
 import com.k2fsa.sherpa.onnx.OfflineTtsModelConfig
@@ -50,7 +51,7 @@ class SherpaTtsEngine(private val context: Context) : SpeechOutput {
     }
 
     override val displayName = "sherpa vits"
-    override val isAvailable: Boolean = modelFilesPresent(modelDir(appContext))
+    override val isAvailable: Boolean = activeVoiceDir() != null
 
     override fun speak(text: String, onDone: (() -> Unit)?) {
         if (text.isBlank()) { onDone?.invoke(); return }
@@ -158,7 +159,7 @@ class SherpaTtsEngine(private val context: Context) : SpeechOutput {
     private fun obtainTts(): OfflineTts? =
         synchronized(ttsLock) {
             tts?.let { return it }
-            val dir = modelDir(appContext)
+            val dir = activeVoiceDir() ?: return null
             val model = dir.listFiles { f -> f.isFile && f.name.endsWith(".onnx") }
                 ?.minByOrNull { it.name } ?: return null
             val tokens = File(dir, "tokens.txt")
@@ -180,6 +181,41 @@ class SherpaTtsEngine(private val context: Context) : SpeechOutput {
                 .getOrNull()
                 ?.also { tts = it }
         }
+
+    /**
+     * Drops the cached engine so the next [speak] re-resolves the active
+     * voice directory (called after a voice-pack switch). Synthesis in
+     * flight keeps its own reference and finishes undisturbed.
+     */
+    fun invalidate() {
+        val engine = synchronized(ttsLock) { tts }
+        if (engine != null) {
+            synchronized(ttsLock) { tts = null }
+            Thread({
+                runCatching { engine.release() }
+            }, "sherpa-tts-invalidate").apply { isDaemon = true }.start()
+        }
+    }
+
+    /**
+     * Which voice directory speaks: (1) the user's explicit choice from the
+     * voice-pack manager, (2) the legacy flat layout adb-pushed under
+     * voice/tts/, (3) any installed pack — deterministic alphabetical order
+     * so the same device always picks the same voice.
+     */
+    private fun activeVoiceDir(): File? {
+        val root = modelDir(appContext)
+        val pref = appContext.getSharedPreferences("jarvis", Context.MODE_PRIVATE)
+            .getString(VoicePackManager.PREF_VOICE, null)
+        if (pref != null) {
+            val dir = File(root, pref)
+            if (modelFilesPresent(dir)) return dir
+        }
+        if (modelFilesPresent(root)) return root
+        return root.listFiles { f -> f.isDirectory }
+            ?.filter { modelFilesPresent(it) }
+            ?.minByOrNull { it.name }
+    }
 
     companion object {
         /**

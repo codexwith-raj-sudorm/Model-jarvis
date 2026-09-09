@@ -37,6 +37,8 @@ fun ModelDownloadDialog(onDismiss: () -> Unit) {
     val vm = ServiceLocator.viewModel
     val downloader = ServiceLocator.modelDownloader
     val states by downloader.states.collectAsState()
+    val packs = ServiceLocator.voicePacks
+    val voiceStates by packs.states.collectAsState()
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -45,8 +47,7 @@ fun ModelDownloadDialog(onDismiss: () -> Unit) {
             Column {
                 Text(
                     "Wi-Fi recommended — downloads resume automatically if " +
-                        "interrupted. (Voice packs still come from " +
-                        "scripts/get_voice_models.sh.)",
+                        "interrupted. Voice packs change what JARVIS sounds like.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -86,6 +87,83 @@ fun ModelDownloadDialog(onDismiss: () -> Unit) {
                                         }) { Text("activate") }
                                     else ->
                                         TextButton(onClick = { downloader.start(entry) }) {
+                                            Text("download")
+                                        }
+                                }
+                            }
+
+                            when (state?.status) {
+                                ModelDownloader.Status.RUNNING -> {
+                                    Spacer(Modifier.height(4.dp))
+                                    if (state.total > 0) {
+                                        LinearProgressIndicator(
+                                            progress = {
+                                                (state.received.toFloat() / state.total)
+                                                    .coerceIn(0f, 1f)
+                                            },
+                                            modifier = Modifier.fillMaxWidth(),
+                                        )
+                                        Text(
+                                            "${state.received / 1048576} / ${state.total / 1048576} MB",
+                                            style = MaterialTheme.typography.labelSmall,
+                                        )
+                                    } else {
+                                        LinearProgressIndicator(Modifier.fillMaxWidth())
+                                    }
+                                }
+                                ModelDownloader.Status.FAILED ->
+                                    Text(
+                                        "failed — tap download to retry (resumes)",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.error,
+                                    )
+                                else -> {}
+                            }
+                        }
+                    }
+
+                    // ---- voice packs ------------------------------------------------
+
+                    item {
+                        Text(
+                            "Voice packs",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(top = 6.dp),
+                        )
+                    }
+                    items(packs.catalog) { entry ->
+                        val state = voiceStates[entry.id]
+                        val installed = packs.isInstalled(entry)
+                        val active = packs.isActive(entry)
+
+                        Column {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Column(Modifier.weight(1f)) {
+                                    Text(
+                                        entry.title,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                    )
+                                    Text(
+                                        "${entry.langLabel} · ${entry.gender} · ${entry.sizeLabel}" +
+                                            if (active) " · ● active" else "",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                                when {
+                                    state?.status == ModelDownloader.Status.RUNNING ->
+                                        TextButton(onClick = { packs.cancel(entry.id) }) {
+                                            Text("cancel")
+                                        }
+                                    installed && active -> {}
+                                    installed ->
+                                        TextButton(onClick = { packs.activate(entry) }) {
+                                            Text("activate")
+                                        }
+                                    else ->
+                                        TextButton(onClick = { packs.start(entry) }) {
                                             Text("download")
                                         }
                                 }
