@@ -83,19 +83,30 @@ jobs:
             ./gradlew assembleDebug --stacktrace -Pandroid.injected.build.abi=arm64-v8a 2>&1 | tee ../build.log
           fi
 
-      - name: List APK outputs
+      - name: Locate APK (exact path, no glob guessing)
+        id: apk
         if: always()
         run: |
-          find jarvis/app/build/outputs -name "*.apk" > ../apk-list.txt 2>/dev/null || true
-          echo "APKs found:"; cat ../apk-list.txt
+          # working-directory is jarvis/ — paths here are repo-relative to it
+          find app/build/outputs -name "*.apk" > ../apk-list.txt 2>/dev/null || true
+          echo "APKs found:"; cat ../apk-list.txt || true
+          APK=$(head -1 ../apk-list.txt 2>/dev/null || true)
+          if [ -n "$APK" ]; then
+            echo "rootpath=jarvis/$APK" >> "$GITHUB_OUTPUT"
+          fi
+          {
+            echo "### APK outputs"
+            echo '```'
+            cat ../apk-list.txt 2>/dev/null || echo "(none)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload APK
-        if: success()
+        if: success() && steps.apk.outputs.rootpath != ''
         uses: actions/upload-artifact@v4
         with:
           name: jarvis-debug-apk
-          # injected-ABI builds land in outputs/apk/<abi>/debug/ — glob deep
-          path: jarvis/app/build/outputs/**/*.apk
+          path: ${{ steps.apk.outputs.rootpath }}
           if-no-files-found: error
 
       - name: Report failure tail (commit comment)
