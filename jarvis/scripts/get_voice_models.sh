@@ -15,7 +15,9 @@ BASE=https://github.com/k2-fsa/sherpa-onnx/releases/download
 APP_DIR=/sdcard/Android/data/com.jarvis.assistant/files/voice
 
 ASR_MODEL=sherpa-onnx-streaming-zipformer-en-2023-06-26     # English streaming, ~45 MB
-TTS_MODEL=vits-piper-en_US-amy-medium                       # English Piper voice, ~65 MB
+TTS_MODEL=vits-piper-en_GB-alan-medium                       # British male butler voice, ~65 MB
+# other voices: vits-piper-en_US-amy-medium (US female), en_GB-northern_english_male-medium,
+# full list: https://github.com/k2-fsa/sherpa-onnx/releases/tag/tts-models
 WAKE_MODEL=sherpa-onnx-kws-zipformer-zh-en-3M-2025-12-20    # KWS (en+zh), ~38 MB
 # More models: https://github.com/k2-fsa/sherpa-onnx/releases
 #   ASR tag "asr-models", TTS tag "tts-models" (incl. Indic voices),

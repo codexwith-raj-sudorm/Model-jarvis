@@ -182,8 +182,11 @@ class SherpaTtsEngine(private val context: Context) : SpeechOutput {
         }
 
     companion object {
-        /** Voice speed — also a documented tuning knob. */
-        const val SPEECH_RATE = 1.0f
+        /**
+         * Voice speed — also a documented tuning knob. Slightly under 1.0:
+         * a measured butler delivery beats a rushed one.
+         */
+        const val SPEECH_RATE = 0.95f
 
         fun modelDir(context: Context): File =
             File(com.jarvis.assistant.llm.ModelManager.baseDir(context), "voice/tts")
