@@ -57,6 +57,7 @@ class Orchestrator(
         chatLog.add(Role.USER, text)
 
         var rounds = 0
+        val toolsFired = LinkedHashSet<String>()
         while (true) {
             val messages = budgetedHistory(chatLog)
             val system = buildSystemPrompt(text, toolContext)
@@ -83,11 +84,16 @@ class Orchestrator(
                             "please ask again."
                     }
                 }
-                return chatLog.add(Role.ASSISTANT, answer)
+                // stamp the tools that produced this answer (citation chips)
+                return chatLog.add(
+                    Role.ASSISTANT, answer,
+                    source = toolsFired.takeIf { it.isNotEmpty() }?.joinToString(", "),
+                )
             }
 
             // execute every call, feed results back as TOOL messages
             for (call in parsed.calls) {
+                toolsFired.add(call.name)
                 onStatus("⚙ ${call.name}…")
                 val result = runCatching {
                     registry.execute(call.name, call.args, toolContext)

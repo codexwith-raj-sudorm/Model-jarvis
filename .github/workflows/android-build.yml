@@ -61,6 +61,16 @@ jobs:
             "https://github.com/k2-fsa/sherpa-onnx/releases/download/v1.12.40/sherpa-onnx-1.12.40.aar"
           ls -la app/libs/
 
+      - name: Cache native build (llama.cpp + CMake artifacts)
+        uses: actions/cache@v4
+        with:
+          path: |
+            jarvis/app/.cxx
+            jarvis/app/build/intermediates/cxx
+          key: native-${{ runner.os }}-b10876-${{ hashFiles('jarvis/app/src/main/cpp/**') }}
+          restore-keys: |
+            native-${{ runner.os }}-b10876-
+
       - name: Build debug APK
         run: |
           set -o pipefail
@@ -73,27 +83,38 @@ jobs:
             ./gradlew assembleDebug --stacktrace -Pandroid.injected.build.abi=arm64-v8a 2>&1 | tee ../build.log
           fi
 
+      - name: List APK outputs
+        if: always()
+        run: |
+          find jarvis/app/build/outputs -name "*.apk" > ../apk-list.txt 2>/dev/null || true
+          echo "APKs found:"; cat ../apk-list.txt
+
       - name: Upload APK
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: jarvis-debug-apk
-          # ABI-injected builds get named app-<abi>-debug.apk — glob it
-          path: jarvis/app/build/outputs/apk/debug/*.apk
+          # injected-ABI builds land in outputs/apk/<abi>/debug/ — glob deep
+          path: jarvis/app/build/outputs/**/*.apk
           if-no-files-found: error
 
       - name: Report failure tail (commit comment)
         if: failure()
         run: |
           LOG=../build.log
-          if [ ! -f "$LOG" ]; then echo "no build log captured"; exit 0; fi
-          # strip ANSI colors, keep the last 28000 chars
-          sed 's/\x1b\[[0-9;]*m//g' "$LOG" | tail -c 28000 > /tmp/tail.txt
           {
-            echo "### ❌ Gradle failure — log tail (commit ${GITHUB_SHA:0:7})"
-            echo '```'
-            cat /tmp/tail.txt
-            echo '```'
+            echo "### ❌ Build failed — diagnostics (commit ${GITHUB_SHA:0:7})"
+            if [ -f ../apk-list.txt ] && [ -s ../apk-list.txt ]; then
+              echo "**APKs on disk:**"; echo '```'; cat ../apk-list.txt; echo '```'
+            fi
+            if [ -f "$LOG" ]; then
+              echo "**Gradle log tail:**"
+              echo '```'
+              sed 's/\x1b\[[0-9;]*m//g' "$LOG" | tail -c 28000
+              echo '```'
+            else
+              echo "(no build log captured — failed before/at the build step)"
+            fi
           } > /tmp/body.txt
           jq -n --rawfile b /tmp/body.txt '{body: $b}' > /tmp/payload.json
           curl -s -X POST \
