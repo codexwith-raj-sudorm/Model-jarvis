@@ -3,6 +3,9 @@ name: Android build
 # The "real Android Studio build", headless: same Gradle assembleDebug that
 # Studio runs, on a proper Linux runner with JDK 17 + Android SDK + NDK.
 # First-compile iteration loop (P0) — expect fixes until this goes green.
+#
+# On failure the Gradle log tail is posted as a commit comment (api.github.com)
+# so it can be read even from networks where Actions blob storage is blocked.
 
 on:
   push:
@@ -13,6 +16,9 @@ on:
         description: "Build all 3 ABIs (arm64 + armv7 + x86_64 — slower)"
         type: boolean
         default: false
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -47,13 +53,14 @@ jobs:
 
       - name: Build debug APK
         run: |
+          set -o pipefail
           chmod +x gradlew
           if [ "${{ inputs.full_abis }}" = "true" ]; then
-            ./gradlew assembleDebug --stacktrace
+            ./gradlew assembleDebug --stacktrace 2>&1 | tee ../build.log
           else
             # fast iteration: one ABI; flip via workflow_dispatch for the
             # full matrix once the build is green
-            ./gradlew assembleDebug --stacktrace -Pandroid.injected.build.abi=arm64-v8a
+            ./gradlew assembleDebug --stacktrace -Pandroid.injected.build.abi=arm64-v8a 2>&1 | tee ../build.log
           fi
 
       - name: Upload APK
@@ -63,3 +70,26 @@ jobs:
           name: jarvis-debug-apk
           path: jarvis/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+
+      - name: Report failure tail (commit comment)
+        if: failure()
+        run: |
+          LOG=../build.log
+          if [ ! -f "$LOG" ]; then echo "no build log captured"; exit 0; fi
+          # strip ANSI colors, keep the last 28000 chars
+          sed 's/\x1b\[[0-9;]*m//g' "$LOG" | tail -c 28000 > /tmp/tail.txt
+          {
+            echo "### ❌ Gradle failure — log tail (commit ${GITHUB_SHA:0:7})"
+            echo '```'
+            cat /tmp/tail.txt
+            echo '```'
+          } > /tmp/body.txt
+          jq -n --rawfile b /tmp/body.txt '{body: $b}' > /tmp/payload.json
+          curl -s -X POST \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/comments" \
+            -d @/tmp/payload.json > /tmp/resp.json
+          jq -r '.html_url // (.message // "comment post failed")' /tmp/resp.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
