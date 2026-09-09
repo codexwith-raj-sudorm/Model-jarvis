@@ -169,6 +169,18 @@ FIXES = [
      "Hindi voice biases reply language"),
     ("ui/ModelDownloadScreen.kt", "Voice packs",
      "voice pack section in downloader UI"),
+
+    # Comms tools (P2: call, SMS, calendar — intent-based, zero permissions)
+    ("tools/CallTool.kt", "class CallTool",
+     "call tool (ACTION_DIAL)"),
+    ("tools/SmsTool.kt", "class SmsTool",
+     "sms tool (ACTION_SENDTO draft)"),
+    ("tools/CalendarTool.kt", "class CalendarTool",
+     "calendar tool (ACTION_INSERT event)"),
+    ("tools/CalendarTool.kt", "resolveBegin",
+     "calendar date math exists"),
+    ("test/tools/CommsToolsTest.kt", "class CommsToolsTest",
+     "comms tools unit tests exist"),
 ]
 
 # Patterns that must NOT be present (regression tripwires)
