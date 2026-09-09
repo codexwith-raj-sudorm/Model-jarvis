@@ -30,19 +30,19 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Pre-flight audit (fix inventory + syntax)
         run: python3 scripts/audit_fixes.py
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "17"
 
       - name: Gradle (with dependency cache)
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Install Android SDK components
         run: |
@@ -62,7 +62,7 @@ jobs:
           ls -la app/libs/
 
       - name: Cache native build (llama.cpp + CMake artifacts)
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             jarvis/app/.cxx
@@ -113,7 +113,7 @@ jobs:
 
       - name: Upload APK
         if: success() && steps.apk.outputs.rootpath != ''
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: jarvis-debug-apk
           path: ${{ steps.apk.outputs.rootpath }}
