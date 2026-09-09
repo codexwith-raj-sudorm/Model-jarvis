@@ -114,7 +114,15 @@ class ChatViewModel(private val appContext: Context) {
      */
     fun send(text: String, viaVoice: Boolean = false) {
         val trimmed = text.trim()
-        if (trimmed.isEmpty() || _state.value.generating) return
+        if (trimmed.isEmpty()) return
+
+        // "Good morning, JARVIS" → the briefing, no LLM round needed
+        if (Briefing.matchesIntent(trimmed)) {
+            deliverBriefing(force = true)
+            return
+        }
+
+        if (_state.value.generating) return
         if (!sendGuard.compareAndSet(false, true)) return
         stopListening()
 
@@ -171,6 +179,43 @@ class ChatViewModel(private val appContext: Context) {
             _state.update { it.copy(speaking = false) }
             reopenMicIfHandsFree()
         }
+    }
+
+    // ---- briefing ------------------------------------------------------------------
+
+    /**
+     * Delivers the morning briefing by voice. Returns false when suppressed
+     * (already delivered today and not forced, or a turn is generating).
+     * [force] backs the explicit "good morning" intent.
+     */
+    private fun deliverBriefing(force: Boolean): Boolean {
+        if (!force && !Briefing.shouldDeliver(appContext)) return false
+        if (_state.value.generating) return false
+        if (!sendGuard.compareAndSet(false, true)) return false
+        Briefing.markDelivered(appContext)
+        stopListening()
+
+        generationJob = scope.launch(Dispatchers.Default) {
+            try {
+                _state.update { it.copy(generating = true, toolStatus = "⚙ briefing…") }
+                val toolContext = ToolContext(
+                    appContext = appContext,
+                    web = ServiceLocator.web,
+                    memory = ServiceLocator.memory,
+                    webEnabled = ServiceLocator.isWebEnabled(appContext),
+                )
+                val briefing = runCatching { Briefing.build(toolContext) }.getOrElse {
+                    "Good morning, sir. I'm afraid the briefing service is " +
+                        "unavailable at present."
+                }
+                _state.update { it.copy(generating = false, toolStatus = null) }
+                ServiceLocator.chatLog.add(Role.ASSISTANT, briefing, source = "briefing")
+                speakReply(briefing)
+            } finally {
+                sendGuard.set(false)
+            }
+        }
+        return true
     }
 
     // ---- voice loop -------------------------------------------------------------
@@ -241,7 +286,8 @@ class ChatViewModel(private val appContext: Context) {
 
     fun onOverlayOpened() {
         _state.update { it.copy(overlayVisible = true) }
-        startListening()
+        // first summon of the morning gets the briefing; otherwise mic-hot
+        if (!deliverBriefing(force = false)) startListening()
     }
 
     fun onOverlayClosed() {

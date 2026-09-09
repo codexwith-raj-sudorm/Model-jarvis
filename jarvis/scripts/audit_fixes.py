@@ -69,6 +69,20 @@ FIXES = [
      "session delegates UI to AssistantActivity (documented pattern)"),
     ("tile/JarvisTileService.kt", "SDK_INT >= 29) tile.subtitle",
      "tile subtitle API-29 guard"),
+
+    # Phase C — butler features
+    ("agent/Orchestrator.kt", "modeled on Tony Stark's AI butler",
+     "C1 butler persona in system prompt"),
+    ("speech/SherpaTtsEngine.kt", "SPEECH_RATE = 0.95f",
+     "C2 measured butler delivery rate"),
+    ("chat/Briefing.kt", "object Briefing",
+     "C3 briefing builder exists"),
+    ("chat/Briefing.kt", "fun shouldDeliver",
+     "C3 first-summon-of-day policy"),
+    ("chat/ChatViewModel.kt", "deliverBriefing(force = true)",
+     "C3 good-morning intent intercept"),
+    ("chat/ChatViewModel.kt", "if (!deliverBriefing(force = false)) startListening()",
+     "C3 overlay briefing hook"),
 ]
 
 # Patterns that must NOT be present (regression tripwires)
