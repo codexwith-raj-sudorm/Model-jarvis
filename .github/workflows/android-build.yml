@@ -32,6 +32,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Pre-flight audit (fix inventory + syntax)
+        run: python3 scripts/audit_fixes.py
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:

@@ -15,7 +15,8 @@ object WebIntents {
 
     fun classify(query: String): Need {
         val q = query.lowercase()
-        val has = { vararg words: String -> words.any { it in q } }
+        // local function — a vararg lambda assigned to a val can't infer its type
+        fun has(vararg words: String): Boolean = words.any { it in q }
 
         return when {
             has(

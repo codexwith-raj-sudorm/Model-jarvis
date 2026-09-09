@@ -45,12 +45,4 @@ class AssistantActivity : ComponentActivity() {
         ServiceLocator.viewModel?.onOverlayClosed()
         super.onDestroy()
     }
-
-    override fun onBackPressed() {
-        if (lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
-            finish()
-        } else {
-            super.onBackPressed()
-        }
-    }
 }

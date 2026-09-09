@@ -108,7 +108,8 @@ class SherpaTtsEngine(private val context: Context) : SpeechOutput {
                     session.stopped -> 0 // abort synthesis
                     track == null -> 0
                     else -> {
-                        track!!.write(samples, 0, samples.size)
+                        // float[] overload (API 23+) needs the 4-arg form
+                        track!!.write(samples, 0, samples.size, android.media.AudioTrack.WRITE_BLOCKING)
                         if (session.stopped) 0 else samples.size
                     }
                 }

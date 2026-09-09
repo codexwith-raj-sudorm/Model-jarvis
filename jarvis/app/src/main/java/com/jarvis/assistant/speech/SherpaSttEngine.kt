@@ -62,6 +62,7 @@ class SherpaSttEngine(private val context: Context) : VoiceInput {
         }
 
         Thread({
+            worker = Thread.currentThread()
             var record: android.media.AudioRecord? = null
             var stream: OnlineStream? = null
             try {
@@ -100,7 +101,8 @@ class SherpaSttEngine(private val context: Context) : VoiceInput {
                 }
             } catch (e: Throwable) {
                 if (running.getAndSet(false)) onError(e.message ?: "STT failed")
-                return
+                // NOTE: no bare `return` — this is a non-inline lambda;
+                // falling through to finally does the cleanup either way
             } finally {
                 // cleanup on the worker's OWN thread — never join from UI
                 runCatching { record?.stop() }
