@@ -10,6 +10,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -55,7 +56,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -516,46 +521,138 @@ private fun ReactorDot(pulsing: Boolean) {
     )
 }
 
-/** The overlay's animated arc reactor. */
+/**
+ * The overlay's arc reactor — HUD-grade: ten rotating coil segments, a
+ * counter-rotating detail ring, a 36-tick bezel, radial glow, and a core
+ * that wobbles organically while speaking. Rotation speed carries state:
+ * slow idle drift, eager spin while generating.
+ */
 @Composable
 private fun ArcReactor(active: Boolean, speaking: Boolean, generating: Boolean) {
     val transition = rememberInfiniteTransition(label = "arc")
-    val scale by transition.animateFloat(
-        initialValue = 0.92f,
-        targetValue = if (active || speaking) 1.12f else 1.0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(700, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "arc-scale",
+
+    val spinSeconds = when {
+        generating -> 3f
+        speaking -> 6f
+        active -> 10f
+        else -> 26f
+    }
+    val rotation by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(tween((spinSeconds * 1000).toInt(), easing = LinearEasing)),
+        label = "arc-rot",
     )
+    val counter by transition.animateFloat(
+        initialValue = 360f,
+        targetValue = 0f,
+        animationSpec = infiniteRepeatable(tween(17000, easing = LinearEasing)),
+        label = "arc-counter",
+    )
+    val pulse by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(650, easing = LinearEasing), RepeatMode.Reverse),
+        label = "arc-pulse",
+    )
+
     val ringColor = when {
         speaking -> MaterialTheme.colorScheme.secondary
         generating -> MaterialTheme.colorScheme.primary
         active -> Color(0xFFA5F3FC)
         else -> MaterialTheme.colorScheme.outline
     }
-    Box(
-        modifier = Modifier.size(148.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Box(
-            modifier = Modifier
-                .size(148.dp * scale)
-                .clip(CircleShape)
-                .border(3.dp, ringColor, CircleShape)
+
+    Canvas(Modifier.size(148.dp)) {
+        val c = center
+        val r = size.minDimension / 2f
+        val px = 1.dp.toPx()
+
+        // radial glow behind everything
+        drawCircle(
+            brush = Brush.radialGradient(
+                colors = listOf(ringColor.copy(alpha = 0.30f), Color.Transparent),
+                center = c,
+                radius = r * 0.95f,
+            ),
+            radius = r * 0.95f,
+            center = c,
         )
-        Box(
-            modifier = Modifier
-                .size(88.dp)
-                .clip(CircleShape)
-                .border(2.dp, ringColor.copy(alpha = 0.7f), CircleShape)
-        )
-        Box(
-            modifier = Modifier
-                .size(44.dp * scale)
-                .clip(CircleShape)
-                .background(ringColor.copy(alpha = 0.85f))
+
+        // bezel: 36 static ticks at the rim
+        val tickLen = 4f * px
+        val tickR = r - 2f * px
+        repeat(36) { i ->
+            val a = Math.toRadians((i * 10).toDouble())
+            val ca = kotlin.math.cos(a).toFloat()
+            val sa = kotlin.math.sin(a).toFloat()
+            val sx = c.x + (tickR - tickLen) * ca
+            val sy = c.y + (tickR - tickLen) * sa
+            val ex = c.x + tickR * ca
+            val ey = c.y + tickR * sa
+            drawLine(
+                color = ringColor.copy(alpha = 0.28f),
+                start = Offset(sx, sy),
+                end = Offset(ex, ey),
+                strokeWidth = 1.2f * px,
+                cap = StrokeCap.Round,
+            )
+        }
+
+        fun ring(radius: Float, angle: Float, segments: Int, duty: Float, width: Float, alpha: Float) {
+            val stroke = Stroke(width = width * px, cap = StrokeCap.Butt)
+            val sweep = 360f / segments
+            repeat(segments) { i ->
+                drawArc(
+                    color = ringColor.copy(alpha = alpha),
+                    startAngle = angle + i * sweep,
+                    sweepAngle = sweep * duty,
+                    useCenter = false,
+                    topLeft = Offset(c.x - radius, c.y - radius),
+                    size = androidx.compose.ui.geometry.Size(radius * 2, radius * 2),
+                    style = stroke,
+                )
+            }
+        }
+
+        // outer coil ring (the reactor's ten coils)
+        ring(r - 14f * px, rotation, segments = 10, duty = 0.66f, width = 7f, alpha = 0.95f)
+        // counter-rotating inner detail ring
+        ring(r - 34f * px, counter, segments = 24, duty = 0.38f, width = 2.5f, alpha = 0.55f)
+
+        // core: two-frequency wobble while speaking, calm breathing otherwise
+        val wobble = if (speaking) {
+            (0.10 * kotlin.math.sin(pulse * 2.0 * Math.PI) +
+                0.05 * kotlin.math.sin(pulse * 5.3 * Math.PI)).toFloat()
+        } else {
+            0.05f * kotlin.math.sin(pulse * 2.0 * Math.PI).toFloat()
+        }
+        val coreR = (r * 0.30f) * (1f + wobble) * if (generating) 1.08f else 1f
+
+        // core slots — the three inner coils of the Mark-style reactor
+        val slotR = coreR + 9f * px
+        repeat(3) { i ->
+            drawArc(
+                color = ringColor.copy(alpha = 0.8f),
+                startAngle = rotation * -1.5f + i * 120f + 12f,
+                sweepAngle = 96f,
+                useCenter = false,
+                topLeft = Offset(c.x - slotR, c.y - slotR),
+                size = androidx.compose.ui.geometry.Size(slotR * 2, slotR * 2),
+                style = Stroke(width = 4f * px, cap = StrokeCap.Round),
+            )
+        }
+
+        // the heart
+        drawCircle(color = ringColor.copy(alpha = 0.9f), radius = coreR * 0.62f, center = c)
+        drawCircle(
+            brush = Brush.radialGradient(
+                colors = listOf(Color.White.copy(alpha = 0.85f), ringColor.copy(alpha = 0.0f)),
+                center = c,
+                radius = coreR,
+            ),
+            radius = coreR,
+            center = c,
         )
     }
 }
