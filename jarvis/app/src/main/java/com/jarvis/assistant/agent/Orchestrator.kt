@@ -65,7 +65,7 @@ class Orchestrator(
             val raw = try {
                 engine.generate(prompt, generationConfig, onToken)
             } catch (e: CancellationException) {
-                throw
+                throw e // rethrow so coroutine cancellation propagates
             }
 
             val cleaned = template.stripStops(raw)
