@@ -51,6 +51,13 @@ jobs:
             "ndk;27.0.12077973" \
             "cmake;3.22.1" > /dev/null
 
+      - name: Fetch sherpa-onnx AAR (pinned release)
+        run: |
+          mkdir -p app/libs
+          curl -fL --retry 3 -o app/libs/sherpa-onnx-1.12.40.aar \
+            "https://github.com/k2-fsa/sherpa-onnx/releases/download/v1.12.40/sherpa-onnx-1.12.40.aar"
+          ls -la app/libs/
+
       - name: Build debug APK
         run: |
           set -o pipefail

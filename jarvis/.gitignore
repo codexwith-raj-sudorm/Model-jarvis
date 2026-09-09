@@ -19,6 +19,9 @@ build/
 *.tar.bz2
 *.bin
 
+# sherpa-onnx AAR is fetched at build time (CI), not committed
+app/libs/
+
 # Release artifacts
 *.apk
 *.aab
