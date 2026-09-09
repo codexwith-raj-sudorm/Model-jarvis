@@ -17,12 +17,15 @@ interface LlmEngine {
      * Generates a completion for a fully-rendered prompt.
      * [onToken] is invoked with each flushed piece (already UTF-8-sanitized
      * on the native side) from the generation thread — keep it cheap.
+     * [grammar] (optional) is a GBNF grammar constraining the whole output —
+     * used by the tool-call repair path to force valid TOOL_CALL JSON.
      * Returns the complete text (also sanitized).
      */
     suspend fun generate(
         prompt: String,
         config: GenerationConfig,
         onToken: (String) -> Unit = {},
+        grammar: String? = null,
     ): String
 
     /**

@@ -38,6 +38,14 @@ class Orchestrator(
         topK = 40,
     )
 
+    /** Grammar-repair pass: short, near-greedy, grammar-constrained. */
+    val repairConfig = GenerationConfig(
+        nPredict = 160,
+        temp = 0.1f,
+        topP = 0.9f,
+        topK = 40,
+    )
+
     /** Voice mode: shorter answers, no markdown, source attribution. */
     @Volatile
     var voiceMode: Boolean = false
@@ -70,7 +78,28 @@ class Orchestrator(
             }
 
             val cleaned = template.stripStops(raw)
-            val parsed = ToolCallParser.parse(cleaned)
+            var parsed = ToolCallParser.parse(cleaned)
+
+            // ---- grammar-repair pass (P1 quality win) ------------------------
+            // The model TRIED a tool call but the JSON is malformed. Re-generate
+            // once with a GBNF grammar seeded on the TOOL_CALL prefix — the
+            // sampler physically cannot emit invalid syntax. Silent (no tokens
+            // streamed): the repair is plumbing, not prose.
+            if (parsed.calls.isEmpty() && "TOOL_CALL" in cleaned && rounds < MAX_TOOL_ROUNDS) {
+                onStatus("⚙ repairing tool call…")
+                val repaired = runCatching {
+                    engine.generate(
+                        prompt + "TOOL_CALL ",
+                        repairConfig,
+                        onToken = {},
+                        grammar = TOOL_CALL_GRAMMAR,
+                    )
+                }.getOrNull()
+                if (repaired != null) {
+                    val reparsed = ToolCallParser.parse(template.stripStops(repaired))
+                    if (reparsed.calls.isNotEmpty()) parsed = reparsed
+                }
+            }
 
             if (parsed.calls.isEmpty() || rounds >= MAX_TOOL_ROUNDS) {
                 // final answer (or the parser saw nothing callable)
@@ -196,5 +225,20 @@ class Orchestrator(
 
         /** The freshest turns that always survive budget trimming. */
         const val MIN_PRESERVED_TURNS = 2
+
+        /**
+         * GBNF grammar for a single TOOL_CALL object (string-valued args —
+         * every tool's args are Map<String, String> on the Kotlin side
+         * anyway, and "10" parses as well as 10). Syntax follows
+         * llama.cpp's json.gbnf conventions for quoted literals.
+         */
+        val TOOL_CALL_GRAMMAR = """
+            root ::= object
+            object ::= "{" ws "\"name\"" ws ":" ws string ws "," ws "\"args\"" ws ":" ws args "}"
+            args ::= "{" ws "}" | "{" ws member (ws "," ws member)* ws "}"
+            member ::= string ws ":" ws string
+            string ::= "\"" [^"\\\x00-\x1F]* "\""
+            ws ::= [ \t\n\r]*
+        """.trimIndent()
     }
 }

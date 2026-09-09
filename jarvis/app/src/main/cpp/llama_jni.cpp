@@ -199,7 +199,7 @@ Java_com_jarvis_assistant_llm_LlamaCppEngine_nativeGenerate(
         JNIEnv * env, jobject /*thiz*/,
         jstring jPrompt, jint jNPredict,
         jfloat jTemp, jfloat jTopP, jint jTopK,
-        jobject jCallback) {
+        jstring jGrammar, jobject jCallback) {
 
     std::lock_guard<std::mutex> lock(g_mutex);   // serialize with init/unload
     g_abort = false;                             // clear any stale stop
@@ -209,6 +209,17 @@ Java_com_jarvis_assistant_llm_LlamaCppEngine_nativeGenerate(
     }
 
     const std::string prompt = jstring_to_std(env, jPrompt);
+
+    // ---- optional GBNF grammar (tool-call repair path) ---------------------
+    // When non-null, generation is constrained to the grammar — used to
+    // force a syntactically valid TOOL_CALL JSON when the model's free-form
+    // attempt was close but malformed.
+    std::string grammar;
+    const char * grammar_cstr = nullptr;
+    if (jGrammar != nullptr) {
+        grammar = jstring_to_std(env, jGrammar);
+        if (!grammar.empty()) grammar_cstr = grammar.c_str();
+    }
 
     // ---- optional streaming callback -------------------------------------
     jclass    cbClass = nullptr;
@@ -228,6 +239,16 @@ Java_com_jarvis_assistant_llm_LlamaCppEngine_nativeGenerate(
         llama_sampler_chain_add(smpl, llama_sampler_init_top_p(jTopP > 0 ? jTopP : 0.9f, 1));
         llama_sampler_chain_add(smpl, llama_sampler_init_temp(jTemp));
         llama_sampler_chain_add(smpl, llama_sampler_init_dist(LLAMA_DEFAULT_SEED));
+    }
+    if (grammar_cstr != nullptr) {
+        // appended last: the grammar filters the candidates the samplers
+        // propose, so output can only follow the grammar
+        llama_sampler * g = llama_sampler_init_grammar(g_state.vocab, grammar_cstr, "root");
+        if (g != nullptr) {
+            llama_sampler_chain_add(smpl, g);
+        } else {
+            LOGE("failed to init grammar sampler — falling back to free-form");
+        }
     }
 
     // ---- tokenize prompt ---------------------------------------------------

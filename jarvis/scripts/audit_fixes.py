@@ -109,6 +109,16 @@ FIXES = [
      "C5 fetch-log sheet exists"),
     ("web/WebFetcher.kt", "fun accessSnapshot",
      "C5 fetch-log data source"),
+
+    # GBNF grammar-constrained tool calling (P1)
+    ("agent/Orchestrator.kt", "TOOL_CALL_GRAMMAR",
+     "GBNF tool-call grammar defined"),
+    ("agent/Orchestrator.kt", "grammar = TOOL_CALL_GRAMMAR",
+     "grammar repair path wired"),
+    ("llm/LlamaCppEngine.kt", "grammar: String?,",
+     "engine passes grammar to JNI"),
+    ("agent/Orchestrator.kt", "repairing tool call",
+     "repair status surfaced"),
 ]
 
 # Patterns that must NOT be present (regression tripwires)

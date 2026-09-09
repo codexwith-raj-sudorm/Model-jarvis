@@ -35,6 +35,7 @@ class LlamaCppEngine : LlmEngine {
         temp: Float,
         topP: Float,
         topK: Int,
+        grammar: String?,
         callback: Any?,
     ): String
 
@@ -58,6 +59,7 @@ class LlamaCppEngine : LlmEngine {
         prompt: String,
         config: GenerationConfig,
         onToken: (String) -> Unit,
+        grammar: String?,
     ): String = withContext(Dispatchers.IO) {
         nativeGenerate(
             prompt,
@@ -65,6 +67,7 @@ class LlamaCppEngine : LlmEngine {
             config.temp,
             config.topP,
             config.topK,
+            grammar,
             TokenForwarder(onToken),
         )
     }
