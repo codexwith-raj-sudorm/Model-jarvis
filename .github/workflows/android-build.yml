@@ -87,12 +87,23 @@ jobs:
         id: apk
         if: always()
         run: |
-          # working-directory is jarvis/ — paths here are repo-relative to it
-          find app/build/outputs -name "*.apk" > ../apk-list.txt 2>/dev/null || true
+          # workspace-wide, absolute — cannot miss wherever AGP put it
+          find "$GITHUB_WORKSPACE" -name "*.apk" > ../apk-list.txt 2>/dev/null || true
           echo "APKs found:"; cat ../apk-list.txt || true
           APK=$(head -1 ../apk-list.txt 2>/dev/null || true)
+
           if [ -n "$APK" ]; then
-            echo "rootpath=jarvis/$APK" >> "$GITHUB_OUTPUT"
+            REL="${APK#"$GITHUB_WORKSPACE"/}"
+            echo "rootpath=$REL" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::no APK anywhere in the workspace — dumping build dirs"
+            {
+              echo "=== ls jarvis/app/build ==="
+              ls -laR "$GITHUB_WORKSPACE/jarvis/app/build" 2>&1 | head -200
+              echo "=== ls jarvis/app ==="
+              ls -la "$GITHUB_WORKSPACE/jarvis/app" 2>&1
+            } > ../builddir.txt 2>&1 || true
+            if [ "${{ job.status }}" = "success" ]; then exit 1; fi
           fi
           {
             echo "### APK outputs"
@@ -117,6 +128,9 @@ jobs:
             echo "### ❌ Build failed — diagnostics (commit ${GITHUB_SHA:0:7})"
             if [ -f ../apk-list.txt ] && [ -s ../apk-list.txt ]; then
               echo "**APKs on disk:**"; echo '```'; cat ../apk-list.txt; echo '```'
+            fi
+            if [ -f ../builddir.txt ]; then
+              echo "**Build dir dump:**"; echo '```'; head -150 ../builddir.txt; echo '```'
             fi
             if [ -f "$LOG" ]; then
               echo "**Gradle log tail:**"
