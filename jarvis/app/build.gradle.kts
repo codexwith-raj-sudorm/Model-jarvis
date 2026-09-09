@@ -8,6 +8,9 @@ android {
     namespace = "com.jarvis.assistant"
     compileSdk = 35
 
+    // pinned so CI and local builds resolve the exact same NDK
+    ndkVersion = "27.0.12077973"
+
     defaultConfig {
         applicationId = "com.jarvis.assistant"
         minSdk = 26          // adaptive icons (mipmap-anydpi-v26), FGS types checked at runtime

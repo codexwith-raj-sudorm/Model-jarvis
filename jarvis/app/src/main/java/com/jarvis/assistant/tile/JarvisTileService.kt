@@ -17,7 +17,8 @@ class JarvisTileService : TileService() {
     override fun onStartListening() {
         qsTile?.let { tile ->
             tile.state = Tile.STATE_ACTIVE
-            tile.subtitle = "summon"
+            // Tile#subtitle needs API 29
+            if (android.os.Build.VERSION.SDK_INT >= 29) tile.subtitle = "summon"
             tile.updateTile()
         }
     }
