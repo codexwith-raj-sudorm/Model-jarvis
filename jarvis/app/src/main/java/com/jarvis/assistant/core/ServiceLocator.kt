@@ -16,9 +16,12 @@ import com.jarvis.assistant.speech.SpeechOutput
 import com.jarvis.assistant.speech.SttEngine
 import com.jarvis.assistant.speech.VoiceInput
 import com.jarvis.assistant.tools.AlarmTool
+import com.jarvis.assistant.tools.CalendarTool
+import com.jarvis.assistant.tools.CallTool
 import com.jarvis.assistant.tools.DateTimeTool
 import com.jarvis.assistant.tools.FlashlightTool
 import com.jarvis.assistant.tools.MemoryTool
+import com.jarvis.assistant.tools.SmsTool
 import com.jarvis.assistant.tools.NewsTool
 import com.jarvis.assistant.tools.TimerTool
 import com.jarvis.assistant.tools.WeatherTool
@@ -99,6 +102,9 @@ object ServiceLocator {
                 register(FlashlightTool())
                 register(DateTimeTool())
                 register(MemoryTool())
+                register(CallTool())
+                register(SmsTool())
+                register(CalendarTool())
             }
 
             orchestrator = Orchestrator(
