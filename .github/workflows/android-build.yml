@@ -71,7 +71,7 @@ jobs:
           restore-keys: |
             native-${{ runner.os }}-b10876-
 
-      - name: Unit tests (pure-JVM: parsers, ranker, formatter, intents)
+      - name: "Unit tests (pure-JVM parsers, ranker, formatter, intents)"
         run: ./gradlew testDebugUnitTest --stacktrace
 
       - name: Build debug APK (all ABIs)

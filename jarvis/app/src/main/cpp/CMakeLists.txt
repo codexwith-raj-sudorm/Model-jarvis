@@ -18,6 +18,12 @@ set(LLAMA_BUILD_SERVER   OFF CACHE BOOL "" FORCE)
 set(LLAMA_BUILD_TOOLS    OFF CACHE BOOL "" FORCE)
 set(LLAMA_CURL           OFF CACHE BOOL "" FORCE)
 set(GGML_OPENMP          OFF CACHE BOOL "" FORCE)  # NDK r26+ often lacks OpenMP
+# 32-bit ARM: sgemm.cpp's fp16 NEON intrinsics (vld1q_f16) need the fp16
+# vector extension most armv7 devices lack — disable the llamafile sgemm
+# fast-path there (standard matmul fallback; speed optimization only)
+if(ANDROID_ABI STREQUAL "armeabi-v7a")
+    set(GGML_LLAMAFILE    OFF CACHE BOOL "" FORCE)
+endif()
 
 include(FetchContent)
 FetchContent_Declare(
