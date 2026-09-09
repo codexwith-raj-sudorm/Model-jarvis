@@ -47,6 +47,8 @@ object ServiceLocator {
         private set
     lateinit var modelManager: ModelManager
         private set
+    lateinit var modelDownloader: com.jarvis.assistant.llm.ModelDownloader
+        private set
     lateinit var engine: LlamaCppEngine
         private set
     lateinit var registry: ToolRegistry
@@ -73,6 +75,7 @@ object ServiceLocator {
             memory = MemoryStore(app)
             web = WebFetcher(app)
             modelManager = ModelManager(app)
+            modelDownloader = com.jarvis.assistant.llm.ModelDownloader(app, web, modelManager)
             engine = LlamaCppEngine()
 
             registry = ToolRegistry().apply {

@@ -97,6 +97,7 @@ private fun FullChatContent(
 ) {
     var input by remember { mutableStateOf("") }
     var modelMenuOpen by remember { mutableStateOf(false) }
+    var showDownloader by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
 
     // keep the newest content on screen
@@ -134,10 +135,14 @@ private fun FullChatContent(
                     }
                     if (ServiceLocator.modelManager.list().isEmpty()) {
                         DropdownMenuItem(
-                            text = { Text("no GGUF in files/models — run scripts/get_models.sh", fontSize = 12.sp) },
-                            onClick = { modelMenuOpen = false },
+                            text = { Text("no model installed yet", fontSize = 12.sp) },
+                            onClick = { },
                         )
                     }
+                    DropdownMenuItem(
+                        text = { Text("⬇ download models…", fontSize = 12.sp) },
+                        onClick = { modelMenuOpen = false; showDownloader = true },
+                    )
                 }
             }
 
@@ -233,6 +238,11 @@ private fun FullChatContent(
                            else MaterialTheme.colorScheme.outline,
                 )
             }
+        }
+
+        // ---- model downloader ----
+        if (showDownloader) {
+            ModelDownloadDialog(onDismiss = { showDownloader = false })
         }
     }
 }
