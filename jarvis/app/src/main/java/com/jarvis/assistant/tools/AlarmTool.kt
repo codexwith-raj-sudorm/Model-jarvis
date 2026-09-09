@@ -45,8 +45,9 @@ class AlarmTool : Tool {
         }
     }
 
-    /** Parses "7:30", "0730", "7 am", "9:15 pm", "19" → (hour, minute). */
-    private fun parseTimeOfDay(s: String): Pair<Int, Int>? {
+    /** Parses "7:30", "0730", "7 am", "9:15 pm", "19" → (hour, minute).
+     *  internal for unit tests — this is the flakiest parsing in the app. */
+    internal fun parseTimeOfDay(s: String): Pair<Int, Int>? {
         val t = s.trim().lowercase()
 
         Regex("(\\d{1,2})[:.](\\d{2})\\s*(am|pm)?").find(t)?.let { m ->

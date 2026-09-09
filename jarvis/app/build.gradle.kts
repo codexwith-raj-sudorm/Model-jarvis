@@ -72,6 +72,9 @@ dependencies {
     // Readability-style article extraction (also parses the Google News RSS)
     implementation(libs.jsoup)
 
+    // pure-JVM unit tests for the parsers/ranker/formatter/intents
+    testImplementation(kotlin("test"))
+
     // fully-offline STT / TTS / keyword-spotting (JNI AAR).
     // Preferred: pinned AAR fetched from the sherpa-onnx GitHub release
     // (deterministic — CI downloads it into app/libs/ before building).

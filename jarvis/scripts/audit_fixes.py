@@ -19,9 +19,15 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "app/src/main/java")
 
 PKG = os.path.join(SRC, "com/jarvis/assistant")
+TESTPKG = os.path.join(ROOT, "app/src/test/java/com/jarvis/assistant")
 
 def read(rel):
-    with open(os.path.join(PKG, rel), encoding="utf-8") as f:
+    """Main-source paths are relative to PKG; 'test/'-prefixed paths go to TESTPKG."""
+    if rel.startswith("test/"):
+        path = os.path.join(TESTPKG, rel[len("test/"):])
+    else:
+        path = os.path.join(PKG, rel)
+    with open(path, encoding="utf-8") as f:
         return f.read()
 
 # (file, pattern, description) — grows with every fix, forever.
@@ -119,6 +125,22 @@ FIXES = [
      "engine passes grammar to JNI"),
     ("agent/Orchestrator.kt", "repairing tool call",
      "repair status surfaced"),
+
+    # Unit tests (P1: tests + CI)
+    ("test/agent/ToolCallParserTest.kt", "class ToolCallParserTest",
+     "parser unit tests exist"),
+    ("test/web/ParagraphRankerTest.kt", "class ParagraphRankerTest",
+     "ranker unit tests exist"),
+    ("test/speech/SpeechFormatterTest.kt", "class SpeechFormatterTest",
+     "formatter unit tests exist"),
+    ("test/agent/WebIntentsTest.kt", "class WebIntentsTest",
+     "intent router unit tests exist"),
+    ("test/tools/TimeParsingTest.kt", "class TimeParsingTest",
+     "time parsing unit tests exist"),
+    ("test/llm/ChatTemplateTest.kt", "class ChatTemplateTest",
+     "template unit tests exist"),
+    ("test/chat/BriefingTest.kt", "class BriefingTest",
+     "briefing intent unit tests exist"),
 ]
 
 # Patterns that must NOT be present (regression tripwires)

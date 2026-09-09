@@ -38,8 +38,9 @@ class TimerTool : Tool {
         }
     }
 
-    /** Sums every "<n> <unit>" pair found in the string. */
-    private fun parseDuration(s: String): Int {
+    /** Sums every "<n> <unit>" pair found in the string.
+     *  internal for unit tests. */
+    internal fun parseDuration(s: String): Int {
         val t = s.lowercase().replace(" and ", " ")
         var total = 0
         for (m in Regex("(\\d+(?:\\.\\d+)?)\\s*(hours?|hrs?|h|minutes?|mins?|m|seconds?|secs?|s)").findAll(t)) {
