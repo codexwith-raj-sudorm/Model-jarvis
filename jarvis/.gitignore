@@ -1,0 +1,28 @@
+# Android / Gradle
+*.iml
+.gradle/
+/local.properties
+.idea/
+.DS_Store
+build/
+/captures
+.externalNativeBuild/
+.cxx/
+
+# Native build intermediates
+*.so
+!gradle/wrapper/gradle-wrapper.jar
+
+# Models are multi-GB side-loads, never source-controlled
+*.gguf
+*.onnx
+*.tar.bz2
+*.bin
+
+# Release artifacts
+*.apk
+*.aab
+*.ap_
+
+# JARVIS dossier output is generated, not hand-edited
+/JARVIS-PROJECT-DOSSIER.md
