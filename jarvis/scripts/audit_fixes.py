@@ -141,6 +141,18 @@ FIXES = [
      "template unit tests exist"),
     ("test/chat/BriefingTest.kt", "class BriefingTest",
      "briefing intent unit tests exist"),
+
+    # Semantic memory (P1: embedding-based recall)
+    ("memory/Embedder.kt", "interface Embedder",
+     "embedder seam for future transformer upgrade"),
+    ("memory/Embedder.kt", "class HashEmbedder(override val dims: Int = 512)",
+     "feature-hashing embedder, stopword+stem pipeline"),
+    ("memory/MemoryStore.kt", "ALTER TABLE facts ADD COLUMN embedding BLOB",
+     "v2 schema migration preserves old facts"),
+    ("memory/MemoryStore.kt", "cosine(qVec, vec) + 0.15f",
+     "semantic search with lexical blend"),
+    ("test/memory/EmbedderTest.kt", "class EmbedderTest",
+     "embedding unit tests exist"),
 ]
 
 # Patterns that must NOT be present (regression tripwires)
