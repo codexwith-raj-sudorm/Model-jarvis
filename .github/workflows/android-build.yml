@@ -71,17 +71,13 @@ jobs:
           restore-keys: |
             native-${{ runner.os }}-b10876-
 
-      - name: Build debug APK
+      - name: Build debug APK (all ABIs)
         run: |
           set -o pipefail
           chmod +x gradlew
-          if [ "${{ inputs.full_abis }}" = "true" ]; then
-            ./gradlew assembleDebug --stacktrace 2>&1 | tee ../build.log
-          else
-            # fast iteration: one ABI; flip via workflow_dispatch for the
-            # full matrix once the build is green
-            ./gradlew assembleDebug --stacktrace -Pandroid.injected.build.abi=arm64-v8a 2>&1 | tee ../build.log
-          fi
+          # full matrix: arm64-v8a + armeabi-v7a + x86_64 — the native cache
+          # makes the extra ABIs a one-time cost
+          ./gradlew assembleDebug --stacktrace 2>&1 | tee ../build.log
 
       - name: Locate APK (exact path, no glob guessing)
         id: apk
