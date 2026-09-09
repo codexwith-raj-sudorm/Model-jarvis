@@ -83,6 +83,20 @@ FIXES = [
      "C3 good-morning intent intercept"),
     ("chat/ChatViewModel.kt", "if (!deliverBriefing(force = false)) startListening()",
      "C3 overlay briefing hook"),
+
+    # Phase C4 — in-app model downloader
+    ("web/WebFetcher.kt", "suspend fun download(",
+     "C4 resumable download primitive in the only-networking class"),
+    ("llm/ModelDownloader.kt", "class ModelDownloader",
+     "C4 downloader state machine exists"),
+    ("llm/ModelDownloader.kt", "Qwen3-1.7B-Q4_K_M.gguf",
+     "C4 curated catalog present"),
+    ("ui/ModelDownloadScreen.kt", "fun ModelDownloadDialog",
+     "C4 download UI exists"),
+    ("core/ServiceLocator.kt", "ModelDownloader(app, web, modelManager)",
+     "C4 downloader wired"),
+    ("ui/ChatScreen.kt", "ModelDownloadDialog(onDismiss",
+     "C4 dialog reachable from model menu"),
 ]
 
 # Patterns that must NOT be present (regression tripwires)
