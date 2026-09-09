@@ -1,0 +1,65 @@
+name: Android build
+
+# The "real Android Studio build", headless: same Gradle assembleDebug that
+# Studio runs, on a proper Linux runner with JDK 17 + Android SDK + NDK.
+# First-compile iteration loop (P0) — expect fixes until this goes green.
+
+on:
+  push:
+    branches: [main, "arena/**"]
+  workflow_dispatch:
+    inputs:
+      full_abis:
+        description: "Build all 3 ABIs (arm64 + armv7 + x86_64 — slower)"
+        type: boolean
+        default: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    defaults:
+      run:
+        working-directory: jarvis
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Gradle (with dependency cache)
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Install Android SDK components
+        run: |
+          SDKMANAGER="${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
+          "$SDKMANAGER" --install \
+            "platforms;android-35" \
+            "build-tools;34.0.0" \
+            "ndk;27.0.12077973" \
+            "cmake;3.22.1" > /dev/null
+
+      - name: Build debug APK
+        run: |
+          chmod +x gradlew
+          if [ "${{ inputs.full_abis }}" = "true" ]; then
+            ./gradlew assembleDebug --stacktrace
+          else
+            # fast iteration: one ABI; flip via workflow_dispatch for the
+            # full matrix once the build is green
+            ./gradlew assembleDebug --stacktrace -Pandroid.injected.build.abi=arm64-v8a
+          fi
+
+      - name: Upload APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jarvis-debug-apk
+          path: jarvis/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error

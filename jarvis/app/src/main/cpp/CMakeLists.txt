@@ -6,10 +6,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # ---------------------------------------------------------------------------
 # Pull llama.cpp at configure time.
-# TIP: pin a release tag for reproducible builds, e.g.
-#   set(LLAMA_GIT_TAG "b4754")  instead of tracking master below.
+# Pinned to release tag b10876 (verified: include/llama.h at that tag has all
+# 25 API symbols + exact signatures this bridge uses — checked against the
+# live header, per project convention #4). Bump deliberately.
 # ---------------------------------------------------------------------------
-set(LLAMA_GIT_TAG "master" CACHE STRING "llama.cpp git ref")
+set(LLAMA_GIT_TAG "b10876" CACHE STRING "llama.cpp git ref")
 
 set(LLAMA_BUILD_TESTS    OFF CACHE BOOL "" FORCE)
 set(LLAMA_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
