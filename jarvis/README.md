@@ -24,15 +24,22 @@ and *nothing* leaves the device.
 | Voice-optimized spoken answers (short, no markdown, cited) | ✅ voice mode |
 | Hands-free loop: reply spoken → mic re-opens automatically | ✅ 🎧 toggle / overlay |
 | Fully-offline STT (sherpa-onnx streaming zipformer) | ✅ auto-selected when model present |
-| Fully-offline TTS (Piper/VITS via sherpa-onnx) | ✅ auto-selected when voice present |
+| Fully-offline TTS (Piper/VITS via sherpa-onnx) | ✅ default voice: en_GB-alan (butler) |
 | **"Hey JARVIS" wake word** (KWS, CMU-phoneme keywords, no training) | ✅ 👂 toggle, foreground service |
 | Wake fallback driver (ASR phrase match) | ✅ works with just the ASR model |
+| Wake survives reboot (when armed) | ✅ `WakeBootReceiver` |
 | System STT/TTS fallback | ✅ zero-setup graceful degrade |
 | Long-term memory (facts, SQLite) | ✅ lexical retrieval (embeddings later) |
 | System Assistant role (home-swipe / power-hold) | ✅ `VoiceInteractionService` |
 | Voice-first overlay screen (auto-mic) + Quick Settings tile | ✅ |
 | Cross-screen conversation continuity | ✅ shared `ChatLog` |
-| Screen context ("what's on my screen?"), boot auto-start | 🔜 |
+| **Butler persona** ("sir", dry wit, understated) | ✅ system prompt |
+| **Daily briefing** (date + weather + headlines, first summon of the morning) | ✅ `Briefing.kt` |
+| **In-app model downloader** (resumable, curated catalog) | ✅ model menu → ⬇ |
+| **Citations + fetch log** ("via weather" chips, 🛰 sheet) | ✅ privacy made visible |
+| First-run setup banner (no model? one tap to download) | ✅ |
+| CI: real Gradle+NDK build on every push, APK artifact | ✅ GitHub Actions |
+| Screen context ("what's on my screen?") | 🔜 |
 
 ## Project layout
 
@@ -183,8 +190,11 @@ feature session:
 ## Roadmap
 
 See `docs/local-ai-assistant-idea.md` §6 — next up: embedding-based memory,
-RSS+citations UI, in-app model downloader, screen context for the assistant
-role, boot auto-start of the wake service, ExecuTorch/QNN NPU path.
+GBNF grammar-constrained tool calling, speak-over-it barge-in (AEC),
+screen context for the assistant role, Hindi voice packs,
+ExecuTorch/QNN NPU path. *(Shipped in Sessions 16–17: first real CI
+build, in-app model downloader, citations/fetch-log UI, boot auto-start,
+daily briefing, butler persona.)*
 
 ## License notes
 
