@@ -38,5 +38,9 @@ class ModelManager(private val context: Context) {
 
     companion object {
         private const val KEY_ACTIVE = "active_model"
+
+        /** Where the model scripts install: external app-specific dir first. */
+        fun baseDir(context: Context): File =
+            context.getExternalFilesDir(null) ?: context.filesDir
     }
 }

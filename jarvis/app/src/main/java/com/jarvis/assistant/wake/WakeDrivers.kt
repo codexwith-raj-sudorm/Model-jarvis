@@ -63,20 +63,8 @@ private class MicLoop {
         thread = Thread({
             var record: AudioRecord? = null
             try {
-                val minBuf = AudioRecord.getMinBufferSize(
-                    SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT
-                )
-                record = AudioRecord(
-                    MediaRecorder.AudioSource.VOICE_RECOGNITION,
-                    SAMPLE_RATE,
-                    AudioFormat.CHANNEL_IN_MONO,
-                    AudioFormat.ENCODING_PCM_16BIT,
-                    minBuf.coerceAtLeast(CHUNK * 2),
-                )
-                if (record.state != AudioRecord.STATE_INITIALIZED) {
-                    throw IllegalStateException("microphone unavailable")
-                }
-                record.startRecording()
+                record = openMicWithGrace()
+                    ?: throw IllegalStateException("microphone busy or unavailable")
                 val shorts = ShortArray(CHUNK)
                 val floats = FloatArray(CHUNK)
                 while (running) {
@@ -95,6 +83,45 @@ private class MicLoop {
     }
 
     fun stop() { running = false }
+
+    /**
+     * Waits for the loop thread to finish (bounded). Call from a RELEASE
+     * thread before freeing any native object the loop uses — never from
+     * the UI thread.
+     */
+    fun awaitStopped(timeoutMs: Long) {
+        runCatching { thread?.join(timeoutMs) }
+    }
+
+    /**
+     * Opens the mic with a 3×200 ms grace — during wake→overlay handoff the
+     * previous owner may still be releasing its AudioRecord.
+     */
+    private fun openMicWithGrace(): AudioRecord? {
+        repeat(3) { attempt ->
+            runCatching {
+                val minBuf = AudioRecord.getMinBufferSize(
+                    SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT
+                )
+                val record = AudioRecord(
+                    MediaRecorder.AudioSource.VOICE_RECOGNITION,
+                    SAMPLE_RATE,
+                    AudioFormat.CHANNEL_IN_MONO,
+                    AudioFormat.ENCODING_PCM_16BIT,
+                    minBuf.coerceAtLeast(CHUNK * 2),
+                )
+                if (record.state == AudioRecord.STATE_INITIALIZED) {
+                    record.startRecording()
+                    if (record.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
+                        return record
+                    }
+                    record.release()
+                }
+            }
+            if (attempt < 2) Thread.sleep(200)
+        }
+        return null
+    }
 
     companion object {
         const val SAMPLE_RATE = 16000
@@ -175,6 +202,10 @@ class KwsWakeDriver(private val context: Context) : WakeDriver {
         stream = null
         if (kws != null || s != null) {
             Thread({
+                // wait for the mic loop to leave the native objects alone
+                // BEFORE freeing them (bounded join on this release thread —
+                // never the UI thread)
+                mic.awaitStopped(500)
                 runCatching { s?.release() }
                 runCatching { kws?.release() }
             }, "kws-release").apply { isDaemon = true }.start()
@@ -195,7 +226,8 @@ class KwsWakeDriver(private val context: Context) : WakeDriver {
         const val KEYWORDS_SCORE = 1.4f
         const val KEYWORDS_THRESHOLD = 0.25f
 
-        fun wakeDir(context: Context): File = File(context.filesDir, "voice/wake")
+        fun wakeDir(context: Context): File =
+            File(com.jarvis.assistant.llm.ModelManager.baseDir(context), "voice/wake")
 
         private fun File.firstOnnx(prefix: String): File? =
             listFiles { f -> f.isFile && f.name.startsWith(prefix) && f.name.endsWith(".onnx") }
@@ -271,6 +303,8 @@ class AsrPhraseWakeDriver(private val context: Context) : WakeDriver {
         stream = null
         if (rec != null || s != null) {
             Thread({
+                // bounded join before native free — see KwsWakeDriver.stop
+                mic.awaitStopped(500)
                 runCatching { s?.release() }
                 runCatching { rec?.release() }
             }, "asr-wake-release").apply { isDaemon = true }.start()

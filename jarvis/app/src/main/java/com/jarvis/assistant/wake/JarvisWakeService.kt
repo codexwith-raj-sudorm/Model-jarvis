@@ -31,14 +31,21 @@ import com.jarvis.assistant.assistant.AssistantActivity
  */
 class JarvisWakeService : Service() {
 
+    private val driverLock = Any()
+
+    @Volatile
     private var driver: WakeDriver? = null
+
+    /** Gate so a stop that races driver initialization is honored. */
+    @Volatile
+    private var wantListening = false
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_PAUSE -> stopDriver()
-            ACTION_RESUME -> { if (driver == null) startDriver() }
+            ACTION_RESUME -> startDriver()
             else -> {
                 startInForeground()
                 startDriver()
@@ -47,35 +54,54 @@ class JarvisWakeService : Service() {
         return START_STICKY
     }
 
+    /**
+     * Driver creation (ONNX init — the ASR fallback can take a second or
+     * two) must never run on the main thread (Session 11 rules); heavy work
+     * happens on a worker thread while holding [driverLock] so a concurrent
+     * stopDriver() serializes correctly instead of racing.
+     */
     private fun startDriver() {
         if (driver != null) return
-        val d = bestWakeDriver(this)
-        if (d == null) {
-            stopSelf()
-            return
-        }
-        driver = d
-        isRunning = true
-        d.start(
-            onDetected = {
-                // hand the mic to the overlay: stop listening, then summon
-                stopDriver()
-                startActivity(
-                    Intent(this, AssistantActivity::class.java)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        wantListening = true
+        Thread({
+            synchronized(driverLock) {
+                if (!wantListening || driver != null) return@synchronized
+                val d = bestWakeDriver(this)
+                if (d == null) {
+                    stopSelf()
+                    return@synchronized
+                }
+                driver = d
+                isRunning = true
+                d.start(
+                    onDetected = {
+                        // hand the mic to the overlay: stop listening, then summon
+                        stopDriver()
+                        startActivity(
+                            Intent(this, AssistantActivity::class.java)
+                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        )
+                    },
+                    onError = { stopSelf() },
                 )
-            },
-            onError = { stopSelf() },
-        )
+            }
+        }, "wake-driver-start").apply { isDaemon = true }.start()
     }
 
+    /** Fast from any thread: flags + a release thread; no joins, no waits. */
     private fun stopDriver() {
-        driver?.stop() // non-blocking
-        driver = null
-        isRunning = false
+        wantListening = false
+        Thread({
+            synchronized(driverLock) {
+                driver?.stop() // non-blocking: flags + its own release threads
+                driver = null
+                isRunning = false
+            }
+        }, "wake-driver-stop").apply { isDaemon = true }.start()
     }
 
     override fun onDestroy() {
+        wantListening = false
         stopDriver()
         super.onDestroy()
     }
@@ -138,7 +164,9 @@ class JarvisWakeService : Service() {
         var isRunning: Boolean = false
 
         fun start(context: Context) {
-            ContextCompat_startForegroundService(context)
+            androidx.core.content.ContextCompat.startForegroundService(
+                context, Intent(context, JarvisWakeService::class.java)
+            )
         }
 
         fun pause(context: Context) = send(context, ACTION_PAUSE)
@@ -150,12 +178,6 @@ class JarvisWakeService : Service() {
         private fun send(context: Context, action: String) {
             context.startService(
                 Intent(context, JarvisWakeService::class.java).setAction(action)
-            )
-        }
-
-        private fun ContextCompat_startForegroundService(context: Context) {
-            androidx.core.content.ContextCompat.startForegroundService(
-                context, Intent(context, JarvisWakeService::class.java)
             )
         }
     }

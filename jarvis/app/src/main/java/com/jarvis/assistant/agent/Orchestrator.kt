@@ -26,7 +26,7 @@ import java.util.Locale
 class Orchestrator(
     private val engine: LlmEngine,
     /** Re-derived when the active model changes (per-family prompt format). */
-    var template: ChatTemplate,
+    @Volatile var template: ChatTemplate,
     private val registry: ToolRegistry,
     private val memory: com.jarvis.assistant.memory.MemoryStore,
 ) {
@@ -39,6 +39,7 @@ class Orchestrator(
     )
 
     /** Voice mode: shorter answers, no markdown, source attribution. */
+    @Volatile
     var voiceMode: Boolean = false
 
     /**

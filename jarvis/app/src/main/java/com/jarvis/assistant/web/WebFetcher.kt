@@ -1,8 +1,6 @@
 package com.jarvis.assistant.web
 
 import android.content.Context
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.Cache
@@ -54,13 +52,6 @@ class WebFetcher(context: Context) {
             accessLog.addLast(AccessEntry(url, System.currentTimeMillis(), fromCache, bytes))
             while (accessLog.size > LOG_LIMIT) accessLog.removeFirst()
         }
-    }
-
-    private fun isOnline(): Boolean {
-        val cm = appContext.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
-            ?: return false
-        val caps = cm.getNetworkCapabilities(cm.activeNetwork) ?: return false
-        return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 
     /**

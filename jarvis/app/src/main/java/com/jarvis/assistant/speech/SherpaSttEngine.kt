@@ -111,6 +111,9 @@ class SherpaSttEngine(private val context: Context) : VoiceInput {
         }, "sherpa-stt").apply { isDaemon = true }.start()
     }
 
+    @Volatile
+    private var worker: Thread? = null
+
     override fun stopListening() {
         running.set(false) // worker exits at its next 100 ms read
     }
@@ -120,6 +123,10 @@ class SherpaSttEngine(private val context: Context) : VoiceInput {
         val rec = synchronized(recognizerLock) { recognizer }
         if (rec != null) {
             Thread({
+                // bounded join on this release thread (never the UI thread):
+                // the worker may be inside native decode() right now — freeing
+                // the recognizer under it would be a use-after-free
+                runCatching { worker?.join(500) }
                 runCatching { rec.release() }
                 synchronized(recognizerLock) {
                     if (recognizer === rec) recognizer = null
@@ -210,7 +217,8 @@ class SherpaSttEngine(private val context: Context) : VoiceInput {
         const val CHUNK_SAMPLES = 1600          // 100 ms
         const val MAX_UTTERANCE_MS = 20_000L
 
-        fun modelDir(context: Context): File = File(context.filesDir, "voice/asr")
+        fun modelDir(context: Context): File =
+            File(com.jarvis.assistant.llm.ModelManager.baseDir(context), "voice/asr")
 
         fun modelFilesPresent(dir: File): Boolean =
             dir.isDirectory &&

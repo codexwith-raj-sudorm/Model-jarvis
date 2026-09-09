@@ -1,6 +1,5 @@
 package com.jarvis.assistant.ui
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
@@ -32,12 +31,10 @@ private val JarvisColors = darkColorScheme(
 
 /**
  * Arc-reactor dark Material3 theme. JARVIS is a voice assistant for dim
- * rooms and pockets — always dark, ignoring system setting.
+ * rooms and pockets — always dark, ignoring the system setting.
  */
 @Composable
 fun JarvisTheme(content: @Composable () -> Unit) {
-    @Suppress("UNUSED_EXPRESSION")
-    isSystemInDarkTheme() // deliberately ignored — JARVIS is always dark
     MaterialTheme(
         colorScheme = JarvisColors,
         typography = Typography(),

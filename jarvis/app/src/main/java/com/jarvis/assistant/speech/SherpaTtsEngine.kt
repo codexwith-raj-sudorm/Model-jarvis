@@ -143,6 +143,9 @@ class SherpaTtsEngine(private val context: Context) : SpeechOutput {
         val engine = synchronized(ttsLock) { tts }
         if (engine != null) {
             Thread({
+                // wait for any in-flight synthesis to leave native code
+                // before freeing the engine (bounded, on this release thread)
+                runCatching { executor.awaitTermination(500, java.util.concurrent.TimeUnit.MILLISECONDS) }
                 runCatching { engine.release() }
                 synchronized(ttsLock) {
                     if (tts === engine) tts = null
@@ -181,7 +184,8 @@ class SherpaTtsEngine(private val context: Context) : SpeechOutput {
         /** Voice speed — also a documented tuning knob. */
         const val SPEECH_RATE = 1.0f
 
-        fun modelDir(context: Context): File = File(context.filesDir, "voice/tts")
+        fun modelDir(context: Context): File =
+            File(com.jarvis.assistant.llm.ModelManager.baseDir(context), "voice/tts")
 
         fun modelFilesPresent(dir: File): Boolean =
             dir.isDirectory &&

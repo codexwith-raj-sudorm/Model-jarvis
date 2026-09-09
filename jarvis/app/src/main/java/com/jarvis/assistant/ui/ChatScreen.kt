@@ -59,6 +59,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.jarvis.assistant.chat.ChatLog
 import com.jarvis.assistant.chat.ChatMessage
 import com.jarvis.assistant.chat.Role
 import com.jarvis.assistant.core.ServiceLocator
@@ -303,7 +304,7 @@ private fun OverlayContent(
             )
 
             // recent turns (compact, translucent)
-            val recent = messages.takeLast(ChatPreviewCount)
+            val recent = messages.takeLast(ChatLog.OVERLAY_PREVIEW_TURNS)
             if (recent.isNotEmpty()) {
                 Spacer(Modifier.height(20.dp))
                 Column(
@@ -323,8 +324,6 @@ private fun OverlayContent(
         }
     }
 }
-
-private const val ChatPreviewCount = 4
 
 // ---------------------------------------------------------------------------
 // shared pieces
