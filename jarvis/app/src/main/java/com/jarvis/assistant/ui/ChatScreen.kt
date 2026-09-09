@@ -41,6 +41,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -177,6 +178,34 @@ private fun FullChatContent(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 6.dp),
             )
+        }
+
+        // ---- first-run setup banner (no model installed) ----
+        if (ServiceLocator.modelManager.list().isEmpty()) {
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+            ) {
+                Column(Modifier.padding(12.dp)) {
+                    Text(
+                        "At your service — though I must confess, sir, I lack a brain.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        "Download a model over Wi-Fi (resumable, in-app), or run " +
+                            "scripts/get_models.sh. Voice packs come from " +
+                            "scripts/get_voice_models.sh.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    TextButton(onClick = { showDownloader = true }) {
+                        Text("⬇ download a model")
+                    }
+                }
+            }
+            Spacer(Modifier.height(8.dp))
         }
 
         // ---- messages ----
