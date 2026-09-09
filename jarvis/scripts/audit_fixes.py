@@ -73,6 +73,7 @@ FIXES = [
 
 # Patterns that must NOT be present (regression tripwires)
 BANNED = [
+    ("agent/Orchestrator.kt", "throw\n", "bare 'throw' (Kotlin needs 'throw e')"),
     ("ui/ChatScreen.kt", "arcBorder", "dead arcBorder helper must stay dead"),
     ("ui/ChatScreen.kt", "borderCircle", "dead borderCircle helper must stay dead"),
     ("ui/Theme.kt", "isSystemInDarkTheme", "theme must not reference dark-theme check"),
