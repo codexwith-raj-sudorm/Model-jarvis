@@ -71,6 +71,8 @@ dependencies {
     implementation(libs.okhttp)
     // Readability-style article extraction (also parses the Google News RSS)
     implementation(libs.jsoup)
+    // voice-pack tar.bz2 extraction (sherpa voice archives)
+    implementation(libs.commons.compress)
 
     // pure-JVM unit tests for the parsers/ranker/formatter/intents
     testImplementation(kotlin("test"))

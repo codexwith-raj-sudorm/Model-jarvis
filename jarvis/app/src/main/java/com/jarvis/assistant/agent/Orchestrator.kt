@@ -29,6 +29,8 @@ class Orchestrator(
     @Volatile var template: ChatTemplate,
     private val registry: ToolRegistry,
     private val memory: com.jarvis.assistant.memory.MemoryStore,
+    /** Voice-pack language hint: "hi" biases replies toward Hindi. */
+    private val replyLanguage: () -> String = { "auto" },
 ) {
 
     var generationConfig = GenerationConfig(
@@ -177,6 +179,15 @@ class Orchestrator(
                 "VOICE MODE: your reply will be spoken aloud. Answer in at most 3 short " +
                     "sentences of plain text — no markdown, no lists, no URLs. Mention the " +
                     "source naturally (e.g. 'according to Wikipedia, sir').\n\n"
+            )
+        }
+
+        // voice-pack hint: with a Hindi voice installed and active, the reply
+        // must be Hindi for speech to sound right
+        if (replyLanguage() == "hi") {
+            sb.append(
+                "VOICE: you currently speak with a Hindi voice — reply in Hindi " +
+                    "(Devanagari) unless the user writes in another language.\n\n"
             )
         }
 

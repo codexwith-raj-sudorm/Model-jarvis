@@ -49,6 +49,8 @@ object ServiceLocator {
         private set
     lateinit var modelDownloader: com.jarvis.assistant.llm.ModelDownloader
         private set
+    lateinit var voicePacks: com.jarvis.assistant.llm.VoicePackManager
+        private set
     lateinit var engine: LlamaCppEngine
         private set
     lateinit var registry: ToolRegistry
@@ -76,6 +78,15 @@ object ServiceLocator {
             web = WebFetcher(app)
             modelManager = ModelManager(app)
             modelDownloader = com.jarvis.assistant.llm.ModelDownloader(app, web, modelManager)
+            voicePacks = com.jarvis.assistant.llm.VoicePackManager(app, web, onActivated = {
+                // swap the live engine: if the new voice's files check out,
+                // sherpa takes over from (or stays ahead of) system TTS
+                val sherpa = com.jarvis.assistant.speech.SherpaTtsEngine(app)
+                if (sherpa.isAvailable) {
+                    (tts as? com.jarvis.assistant.speech.SherpaTtsEngine)?.invalidate()
+                    tts = sherpa
+                }
+            })
             engine = LlamaCppEngine()
 
             registry = ToolRegistry().apply {
@@ -97,6 +108,7 @@ object ServiceLocator {
                 ),
                 registry = registry,
                 memory = memory,
+                replyLanguage = { voicePacks.activeReplyLang() },
             )
 
             chatLog = ChatLog(memory)

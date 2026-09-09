@@ -153,6 +153,22 @@ FIXES = [
      "semantic search with lexical blend"),
     ("test/memory/EmbedderTest.kt", "class EmbedderTest",
      "embedding unit tests exist"),
+
+    # Voice packs (P2: Hindi voices, in-app download + activation)
+    ("llm/VoicePackManager.kt", "class VoicePackManager",
+     "voice pack manager exists"),
+    ("llm/VoicePackManager.kt", "extractTarBz2",
+     "tar.bz2 extraction with zip-slip guard"),
+    ("llm/VoicePackManager.kt", "vits-piper-hi_IN-rohan-medium-int8",
+     "Hindi voice in catalog"),
+    ("speech/SherpaTtsEngine.kt", "fun activeVoiceDir",
+     "voice directory resolution (pref/legacy/pack)"),
+    ("speech/SherpaTtsEngine.kt", "fun invalidate()",
+     "live voice swap without restart"),
+    ("agent/Orchestrator.kt", "replyLanguage() == \"hi\"",
+     "Hindi voice biases reply language"),
+    ("ui/ModelDownloadScreen.kt", "Voice packs",
+     "voice pack section in downloader UI"),
 ]
 
 # Patterns that must NOT be present (regression tripwires)
