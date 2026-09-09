@@ -289,6 +289,7 @@ private fun FullChatContent(
 }
 
 /** Every URL JARVIS has fetched — the visible half of the privacy contract. */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 private fun FetchLogSheet(onDismiss: () -> Unit) {
     val entries = ServiceLocator.web.accessSnapshot()

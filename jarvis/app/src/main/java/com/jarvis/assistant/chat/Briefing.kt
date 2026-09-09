@@ -71,18 +71,19 @@ object Briefing {
         runCatching {
             val news = NewsTool().execute(emptyMap(), toolContext)
             if (!news.startsWith("[")) {
-                val headlines = news.lineSequence()
-                    .filter { NEWS_LINE.containsMatchIn(it) }
-                    .take(3)
-                    .map {
-                        it.replace(NEWS_LINE, "")
-                            .substringBefore(" (")
-                            .substringBefore(" —")
-                            .trim()
-                    }
-                    .filter { it.isNotEmpty() }
+                val headlines = ArrayList<String>()
+                for (raw in news.lineSequence()) {
+                    if (!NEWS_LINE.containsMatchIn(raw)) continue
+                    val headline = raw
+                        .replace(NEWS_LINE, "")
+                        .substringBefore(" (")
+                        .substringBefore(" —")
+                        .trim()
+                    if (headline.isNotEmpty()) headlines.add(headline)
+                    if (headlines.size >= 3) break
+                }
                 if (headlines.isNotEmpty()) {
-                    parts += "In the news: " + headlines.joinToString(". ") { h -> h } + "."
+                    parts += "In the news: " + headlines.joinToString(". ") + "."
                 }
             }
         }
