@@ -72,6 +72,14 @@ dependencies {
     // Readability-style article extraction (also parses the Google News RSS)
     implementation(libs.jsoup)
 
-    // fully-offline STT / TTS / keyword-spotting (JNI AAR from JitPack)
-    implementation(libs.sherpa.onnx)
+    // fully-offline STT / TTS / keyword-spotting (JNI AAR).
+    // Preferred: pinned AAR fetched from the sherpa-onnx GitHub release
+    // (deterministic — CI downloads it into app/libs/ before building).
+    // Fallback: JitPack coordinates for local dev without the file.
+    val sherpaAar = file("libs/sherpa-onnx-1.12.40.aar")
+    if (sherpaAar.exists()) {
+        implementation(files("libs/sherpa-onnx-1.12.40.aar"))
+    } else {
+        implementation(libs.sherpa.onnx)
+    }
 }
