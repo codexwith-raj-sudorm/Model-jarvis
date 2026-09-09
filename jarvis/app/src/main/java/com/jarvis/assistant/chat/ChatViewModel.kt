@@ -56,6 +56,9 @@ class ChatViewModel(private val appContext: Context) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var generationJob: Job? = null
 
+    /** CAS guard: a second send() while one turn is running is dropped. */
+    private val sendGuard = java.util.concurrent.atomic.AtomicBoolean(false)
+
     init {
         loadModelIfIdle()
     }
@@ -105,18 +108,21 @@ class ChatViewModel(private val appContext: Context) {
 
     /**
      * Sends a user turn through the agent. [viaVoice] marks mic-sourced input
-     * (reply is guaranteed speech-optimized and spoken).
+     * (reply is guaranteed speech-optimized and spoken). Runs on
+     * Dispatchers.Default: prompt building hits SQLite and the token loop is
+     * pure CPU — none of that belongs on the main thread.
      */
     fun send(text: String, viaVoice: Boolean = false) {
         val trimmed = text.trim()
         if (trimmed.isEmpty() || _state.value.generating) return
+        if (!sendGuard.compareAndSet(false, true)) return
         stopListening()
 
         ServiceLocator.orchestrator.voiceMode = viaVoice || _state.value.handsFree
 
-        generationJob = scope.launch {
-            _state.update { it.copy(generating = true, partialReply = "", toolStatus = null) }
+        generationJob = scope.launch(Dispatchers.Default) {
             try {
+                _state.update { it.copy(generating = true, partialReply = "", toolStatus = null) }
                 val toolContext = ToolContext(
                     appContext = appContext,
                     web = ServiceLocator.web,
@@ -138,6 +144,8 @@ class ChatViewModel(private val appContext: Context) {
             } catch (e: Exception) {
                 _state.update { it.copy(generating = false, partialReply = "", toolStatus = null) }
                 ServiceLocator.chatLog.add(Role.ASSISTANT, "[error] ${e.message ?: "generation failed"}")
+            } finally {
+                sendGuard.set(false)
             }
         }
     }
