@@ -15,6 +15,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -667,7 +668,7 @@ private fun HelmetHUD(
         AnimatedVisibility(
             visible = kbdOpen,
             enter = slideInVertically(tween(320, easing = EaseOutCubic)) { it } + fadeIn(tween(200)),
-            exit = slideInVertically(tween(260)) { it } + fadeOut(tween(180)),
+            exit = slideOutVertically(tween(260)) { it } + fadeOut(tween(180)),
             modifier = Modifier.align(Alignment.BottomCenter),
         ) {
             Box(
@@ -767,8 +768,8 @@ private fun PingRings() {
     val t = rememberInfiniteTransition(label = "ping")
     val s1 by t.animateFloat(0.52f, 1.35f, infiniteRepeatable(tween(2400, easing = LinearEasing)), label = "s1")
     val a1 by t.animateFloat(0.7f, 0f, infiniteRepeatable(tween(2400, easing = LinearEasing)), label = "a1")
-    val s2 by t.animateFloat(0.52f, 1.35f, infiniteRepeatable(tween(2400, easing = LinearEasing), delayMillis = 1200), label = "s2")
-    val a2 by t.animateFloat(0.7f, 0f, infiniteRepeatable(tween(2400, easing = LinearEasing), delayMillis = 1200), label = "a2")
+    val s2 by t.animateFloat(0.52f, 1.35f, infiniteRepeatable(tween(2400, easing = LinearEasing, delayMillis = 1200)), label = "s2")
+    val a2 by t.animateFloat(0.7f, 0f, infiniteRepeatable(tween(2400, easing = LinearEasing, delayMillis = 1200)), label = "a2")
     Canvas(Modifier.size(190.dp)) {
         val r = size.minDimension / 2f
         drawCircle(StarkCyan.copy(alpha = a1 * 0.6f), radius = r * s1, center = center, style = Stroke(1.2.dp.toPx()))
