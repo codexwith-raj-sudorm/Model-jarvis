@@ -364,14 +364,30 @@ private fun StarkLabConsole(
                         Icon(Icons.Filled.Mic, contentDescription = "speak", tint = StarkCyan)
                     }
                 }
-                IconButton(
-                    onClick = { if (input.isNotBlank()) { vm.send(input); input = "" } },
-                    enabled = input.isNotBlank() && !ui.generating,
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (input.isNotBlank() && !ui.generating) StarkCyan.copy(alpha = 0.16f)
+                            else Color.Transparent,
+                        )
+                        .border(
+                            1.dp,
+                            if (input.isNotBlank() && !ui.generating) StarkCyan.copy(alpha = 0.32f)
+                            else Color.Transparent,
+                            CircleShape,
+                        )
+                        .clickable(enabled = input.isNotBlank() && !ui.generating) {
+                            if (input.isNotBlank()) { vm.send(input); input = "" }
+                        },
+                    contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         Icons.AutoMirrored.Filled.Send,
                         contentDescription = "send",
-                        tint = if (input.isNotBlank()) StarkCyan else StarkDim.copy(alpha = 0.45f),
+                        tint = if (input.isNotBlank() && !ui.generating) StarkCyan else StarkDim.copy(alpha = 0.45f),
+                        modifier = Modifier.size(18.dp),
                     )
                 }
             }
