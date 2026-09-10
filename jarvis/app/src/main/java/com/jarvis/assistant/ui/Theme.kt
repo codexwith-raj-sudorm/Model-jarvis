@@ -48,7 +48,8 @@ private val JarvisColors = darkColorScheme(
     onSurface = IceText,
     surfaceVariant = PanelVariant,
     onSurfaceVariant = MutedText,
-    outline = Color(0xFF1E3A5F),
+    outline = StarkDim.copy(alpha = 0.22f), // Stark lab bench outline — was #1E3A5F
+    outlineVariant = StarkCyan.copy(alpha = 0.14f),
     error = StarkAlert,
 )
 
