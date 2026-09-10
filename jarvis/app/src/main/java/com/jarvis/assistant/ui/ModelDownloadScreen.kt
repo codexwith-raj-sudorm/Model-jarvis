@@ -88,6 +88,7 @@ fun ModelDownloadDialog(onDismiss: () -> Unit) {
                 // Constrain the list to the dialog's real height — a fixed 360dp
                 // overflowed (and collapsed) on small screens / large fonts.
                 BoxWithConstraints {
+                    val listHeight = minOf(360.dp, constraints.maxHeight * 0.55f)
                 Column {
                     Text(
                         "Wi-Fi recommended — downloads resume automatically. Models are brains, voice packs are voices — both holographically loaded, sir.",
@@ -108,7 +109,7 @@ fun ModelDownloadDialog(onDismiss: () -> Unit) {
                     Spacer(Modifier.height(10.dp))
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(14.dp),
-                        modifier = Modifier.height(minOf(360.dp, constraints.maxHeight * 0.55f)),
+                        modifier = Modifier.height(listHeight),
                     ) {
                         items(downloader.catalog) { entry ->
                             val state = states[entry.fileName]
