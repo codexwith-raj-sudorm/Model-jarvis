@@ -129,9 +129,9 @@ private fun StarkLabConsole(
     }
 
     Box(modifier = Modifier.fillMaxSize().background(StarkDeepSpace)) {
-        // lab hologram layers
-        HexGridOverlay(opacity = 0.06f)
-        ScanlinesOverlay(opacity = 0.035f)
+        // lab hologram layers — Stark bench hologram density
+        HexGridOverlay(opacity = 0.07f)
+        ScanlinesOverlay(opacity = 0.045f)
         Vignette()
         CornerBrackets(color = StarkCyan.copy(alpha = 0.42f), bracketLen = 14f, stroke = 1.2f)
 
