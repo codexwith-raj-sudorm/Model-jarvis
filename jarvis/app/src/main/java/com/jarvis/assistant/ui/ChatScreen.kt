@@ -351,18 +351,22 @@ private fun StarkLabConsole(
                     ),
                 )
                 Spacer(Modifier.size(8.dp))
+                // Stark mic/stop cluster — glass halo
                 if (ui.generating) {
-                    IconButton(onClick = { vm.stopGeneration() }) {
-                        Icon(Icons.Filled.Stop, contentDescription = "stop", tint = StarkCyan)
-                    }
+                    Box(
+                        Modifier.size(40.dp).clip(CircleShape).background(StarkAlert.copy(alpha = 0.14f)).border(1.dp, StarkAlert.copy(alpha = 0.28f), CircleShape).clickable { vm.stopGeneration() },
+                        contentAlignment = Alignment.Center,
+                    ) { Icon(Icons.Filled.Stop, contentDescription = "stop", tint = StarkAlert, modifier = Modifier.size(18.dp)) }
                 } else if (ui.listening) {
-                    IconButton(onClick = { vm.stopListening() }) {
-                        Icon(Icons.Filled.Stop, contentDescription = "stop listening", tint = StarkCyan)
-                    }
+                    Box(
+                        Modifier.size(40.dp).clip(CircleShape).background(StarkCyan.copy(alpha = 0.18f)).border(1.dp, StarkCyan.copy(alpha = 0.38f), CircleShape).clickable { vm.stopListening() },
+                        contentAlignment = Alignment.Center,
+                    ) { Icon(Icons.Filled.Stop, contentDescription = "stop listening", tint = StarkCyan, modifier = Modifier.size(18.dp)) }
                 } else {
-                    IconButton(onClick = { vm.startListening() }) {
-                        Icon(Icons.Filled.Mic, contentDescription = "speak", tint = StarkCyan)
-                    }
+                    Box(
+                        Modifier.size(40.dp).clip(CircleShape).background(StarkPanel.copy(alpha = 0.62f)).border(1.dp, StarkDim.copy(alpha = 0.18f), CircleShape).clickable { vm.startListening() },
+                        contentAlignment = Alignment.Center,
+                    ) { Icon(Icons.Filled.Mic, contentDescription = "speak", tint = StarkCyan, modifier = Modifier.size(18.dp)) }
                 }
                 Box(
                     modifier = Modifier
