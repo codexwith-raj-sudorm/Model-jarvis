@@ -204,11 +204,33 @@ private fun StarkLabConsole(
                         selected = ui.webEnabled,
                         onClick = { vm.toggleWeb() },
                         label = { Text(if (ui.webEnabled) "🌐 WEB LINK" else "✈ OFFLINE", fontFamily = FontFamily.Monospace, fontSize = 11.sp, letterSpacing = 0.6.sp) },
+                        colors = androidx.compose.material3.FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = StarkCyan.copy(alpha = 0.18f),
+                            selectedLabelColor = StarkCyanGlow,
+                            containerColor = StarkPanel.copy(alpha = 0.62f),
+                            labelColor = StarkDim,
+                        ),
+                        border = androidx.compose.material3.FilterChipDefaults.filterChipBorder(
+                            borderColor = if (ui.webEnabled) StarkCyan.copy(alpha = 0.42f) else StarkDim.copy(alpha = 0.22f),
+                            selectedBorderColor = StarkCyan.copy(alpha = 0.42f),
+                            enabled = true, selected = ui.webEnabled,
+                        ),
                     )
                     FilterChip(
                         selected = ui.handsFree,
                         onClick = { vm.toggleHandsFree() },
                         label = { Text("🎧 HANDS-FREE", fontFamily = FontFamily.Monospace, fontSize = 11.sp) },
+                        colors = androidx.compose.material3.FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = StarkCyan.copy(alpha = 0.18f),
+                            selectedLabelColor = StarkCyanGlow,
+                            containerColor = StarkPanel.copy(alpha = 0.62f),
+                            labelColor = StarkDim,
+                        ),
+                        border = androidx.compose.material3.FilterChipDefaults.filterChipBorder(
+                            borderColor = if (ui.handsFree) StarkCyan.copy(alpha = 0.42f) else StarkDim.copy(alpha = 0.22f),
+                            selectedBorderColor = StarkCyan.copy(alpha = 0.42f),
+                            enabled = true, selected = ui.handsFree,
+                        ),
                     )
                     WakeChip(vm, ui)
                 }
@@ -484,6 +506,17 @@ private fun WakeChip(vm: com.jarvis.assistant.chat.ChatViewModel, ui: com.jarvis
             }
         },
         label = { Text(if (ui.wakeArmed) "👂 WAKE ARMED" else "👂 WAKE OFF", fontFamily = FontFamily.Monospace, fontSize = 11.sp) },
+        colors = androidx.compose.material3.FilterChipDefaults.filterChipColors(
+            selectedContainerColor = StarkCyan.copy(alpha = 0.18f),
+            selectedLabelColor = StarkCyanGlow,
+            containerColor = StarkPanel.copy(alpha = 0.62f),
+            labelColor = StarkDim,
+        ),
+        border = androidx.compose.material3.FilterChipDefaults.filterChipBorder(
+            borderColor = if (ui.wakeArmed) StarkCyan.copy(alpha = 0.42f) else StarkDim.copy(alpha = 0.22f),
+            selectedBorderColor = StarkCyan.copy(alpha = 0.42f),
+            enabled = true, selected = ui.wakeArmed,
+        ),
     )
 }
 
