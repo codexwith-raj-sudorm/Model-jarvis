@@ -111,13 +111,17 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Upload APK
-        if: success() && steps.apk.outputs.rootpath != ''
-        uses: actions/upload-artifact@v7
-        with:
-          name: jarvis-debug-apk
-          path: ${{ steps.apk.outputs.rootpath }}
-          if-no-files-found: error
+  - name: Upload APK (+ user manual)
+    if: success() && steps.apk.outputs.rootpath != ''
+    uses: actions/upload-artifact@v7
+    with:
+      name: jarvis-debug-apk
+      # both files land in one artifact — the downloaded zip contains the
+      # APK plus the end-user manual (docs/USER_MANUAL.md)
+      path: |
+        ${{ steps.apk.outputs.rootpath }}
+        jarvis/docs/USER_MANUAL.md
+      if-no-files-found: error
 
       - name: Report failure tail (commit comment)
         if: failure()
