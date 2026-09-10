@@ -569,15 +569,23 @@ private fun HelmetHUD(
     }
 
     if (minimized) {
-        // collapsed orb — tiny bottom-right, tap to restore
+        // collapsed orb — tiny bottom-right, tap to restore — Stark ghost
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xCC050A14))
+                .background(Color(0xD6050A14))
                 .clickable { minimized = false },
             contentAlignment = Alignment.BottomEnd,
         ) {
-            Box(modifier = Modifier.padding(18.dp).alpha(0.72f)) {
+            Box(
+                modifier = Modifier
+                    .padding(18.dp)
+                    .alpha(0.78f)
+                    .clip(CircleShape)
+                    .background(StarkPanel.copy(alpha = 0.62f))
+                    .border(1.dp, StarkCyan.copy(alpha = 0.18f), CircleShape)
+                    .padding(10.dp),
+            ) {
                 StarkArcReactor(active = false, speaking = false, generating = false, compact = true)
             }
         }
