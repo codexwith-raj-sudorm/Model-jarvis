@@ -181,6 +181,14 @@ FIXES = [
      "calendar date math exists"),
     ("test/tools/CommsToolsTest.kt", "class CommsToolsTest",
      "comms tools unit tests exist"),
+
+    # Screen context (P2: on-demand accessibility reading)
+    ("accessibility/ScreenReaderService.kt", "class ScreenReaderService",
+     "accessibility service exists"),
+    ("accessibility/ScreenReaderService.kt", "fun snapshot()",
+     "on-demand capture (events ignored)"),
+    ("tools/ScreenTool.kt", "class ScreenTool",
+     "screen tool registered"),
 ]
 
 # Patterns that must NOT be present (regression tripwires)

@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">JARVIS</string>
+<string name="accessibility_service_description">Lets JARVIS read what\'s on your screen when you ask about it — for example, "what am I looking at?" It captures only at the moment you ask; nothing is stored or sent anywhere. Keep it off and JARVIS simply says screen context is unavailable.</string>
 </resources>

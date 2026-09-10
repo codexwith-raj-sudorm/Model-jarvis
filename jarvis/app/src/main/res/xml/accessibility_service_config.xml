@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Deliberately minimal: the service reads the screen ONLY when the screen
+  tool asks (rootInActiveWindow at request time). It subscribes to window
+  state changes solely because the framework requires an event mask to
+  grant window-content access — every received event is ignored in code.
+-->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeWindowStateChanged"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagDefault"
+    android:canRetrieveWindowContent="true"
+    android:description="@string/accessibility_service_description" />
