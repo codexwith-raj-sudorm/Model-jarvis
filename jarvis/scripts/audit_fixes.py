@@ -181,6 +181,24 @@ FIXES = [
      "calendar date math exists"),
     ("test/tools/CommsToolsTest.kt", "class CommsToolsTest",
      "comms tools unit tests exist"),
+
+    # Screen context (P2: on-demand accessibility reading)
+    ("accessibility/ScreenReaderService.kt", "class ScreenReaderService",
+     "accessibility service exists"),
+    ("accessibility/ScreenReaderService.kt", "fun snapshot()",
+     "on-demand capture (events ignored)"),
+    ("tools/ScreenTool.kt", "class ScreenTool",
+     "screen tool registered"),
+
+    # ASR packs (P2: Bengali ear, in-app)
+    ("llm/VoicePackManager.kt", "asrCatalog",
+     "ASR pack catalog exists"),
+    ("llm/VoicePackManager.kt", "activateAsr",
+     "ASR activation path"),
+    ("llm/VoicePackManager.kt", "bn-vosk",
+     "Bengali streaming ASR in catalog"),
+    ("speech/SherpaSttEngine.kt", "fun activeAsrDir",
+     "ASR dir resolution (pref/legacy/pack)"),
 ]
 
 # Patterns that must NOT be present (regression tripwires)

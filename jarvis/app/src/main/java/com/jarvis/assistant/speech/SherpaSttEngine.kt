@@ -39,7 +39,7 @@ class SherpaSttEngine(private val context: Context) : VoiceInput {
     private val running = AtomicBoolean(false)
 
     override val displayName = "sherpa zipformer"
-    override val isAvailable: Boolean = modelFilesPresent(modelDir(appContext))
+    override val isAvailable: Boolean = activeAsrDir() != null
 
     override fun startListening(
         onPartial: (String) -> Unit,
@@ -139,10 +139,30 @@ class SherpaSttEngine(private val context: Context) : VoiceInput {
 
     // ---- recognizer ---------------------------------------------------------
 
+    /**
+     * Which model directory listens: (1) the user's chosen ASR pack,
+     * (2) the legacy flat layout, (3) any installed pack — deterministic
+     * alphabetical order. Mirrors [SherpaTtsEngine.activeVoiceDir].
+     */
+    private fun activeAsrDir(): File? {
+        val root = modelDir(appContext)
+        val pref = appContext.getSharedPreferences("jarvis", Context.MODE_PRIVATE)
+            .getString(com.jarvis.assistant.llm.VoicePackManager.PREF_ASR, null)
+        if (pref != null) {
+            val dir = File(root, pref)
+            if (modelFilesPresent(dir)) return dir
+        }
+        if (modelFilesPresent(root)) return root
+        return root.listFiles { f -> f.isDirectory }
+            ?.filter { modelFilesPresent(it) }
+            ?.minByOrNull { it.name }
+    }
+
+
     private fun obtainRecognizer(): OnlineRecognizer? =
         synchronized(recognizerLock) {
             recognizer?.let { return it }
-            val dir = modelDir(appContext)
+            val dir = activeAsrDir() ?: return null
             val encoder = dir.firstOnnx("encoder") ?: return null
             val decoder = dir.firstOnnx("decoder") ?: return null
             val joiner = dir.firstOnnx("joiner") ?: return null

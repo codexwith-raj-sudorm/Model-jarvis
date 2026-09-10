@@ -21,6 +21,7 @@ import com.jarvis.assistant.tools.CallTool
 import com.jarvis.assistant.tools.DateTimeTool
 import com.jarvis.assistant.tools.FlashlightTool
 import com.jarvis.assistant.tools.MemoryTool
+import com.jarvis.assistant.tools.ScreenTool
 import com.jarvis.assistant.tools.SmsTool
 import com.jarvis.assistant.tools.NewsTool
 import com.jarvis.assistant.tools.TimerTool
@@ -81,15 +82,26 @@ object ServiceLocator {
             web = WebFetcher(app)
             modelManager = ModelManager(app)
             modelDownloader = com.jarvis.assistant.llm.ModelDownloader(app, web, modelManager)
-            voicePacks = com.jarvis.assistant.llm.VoicePackManager(app, web, onActivated = {
-                // swap the live engine: if the new voice's files check out,
-                // sherpa takes over from (or stays ahead of) system TTS
-                val sherpa = com.jarvis.assistant.speech.SherpaTtsEngine(app)
-                if (sherpa.isAvailable) {
-                    (tts as? com.jarvis.assistant.speech.SherpaTtsEngine)?.invalidate()
-                    tts = sherpa
-                }
-            })
+            voicePacks = com.jarvis.assistant.llm.VoicePackManager(
+                app, web,
+                onActivated = {
+                    // swap the live engine: if the new voice's files check out,
+                    // sherpa takes over from (or stays ahead of) system TTS
+                    val sherpa = com.jarvis.assistant.speech.SherpaTtsEngine(app)
+                    if (sherpa.isAvailable) {
+                        (tts as? com.jarvis.assistant.speech.SherpaTtsEngine)?.invalidate()
+                        tts = sherpa
+                    }
+                },
+                onAsrActivated = {
+                    // release the old recognizer; the next listening session
+                    // builds one from the newly chosen model directory
+                    (stt as? com.jarvis.assistant.speech.SherpaSttEngine)?.shutdown()
+                    stt = com.jarvis.assistant.speech.SherpaSttEngine(app)
+                        .takeIf { it.isAvailable }
+                        ?: stt
+                },
+            )
             engine = LlamaCppEngine()
 
             registry = ToolRegistry().apply {
@@ -105,6 +117,7 @@ object ServiceLocator {
                 register(CallTool())
                 register(SmsTool())
                 register(CalendarTool())
+                register(ScreenTool())
             }
 
             orchestrator = Orchestrator(
