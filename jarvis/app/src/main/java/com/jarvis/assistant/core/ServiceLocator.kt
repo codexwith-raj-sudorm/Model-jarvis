@@ -21,6 +21,7 @@ import com.jarvis.assistant.tools.CallTool
 import com.jarvis.assistant.tools.DateTimeTool
 import com.jarvis.assistant.tools.FlashlightTool
 import com.jarvis.assistant.tools.MemoryTool
+import com.jarvis.assistant.tools.ScreenTool
 import com.jarvis.assistant.tools.SmsTool
 import com.jarvis.assistant.tools.NewsTool
 import com.jarvis.assistant.tools.TimerTool
@@ -105,6 +106,7 @@ object ServiceLocator {
                 register(CallTool())
                 register(SmsTool())
                 register(CalendarTool())
+                register(ScreenTool())
             }
 
             orchestrator = Orchestrator(
