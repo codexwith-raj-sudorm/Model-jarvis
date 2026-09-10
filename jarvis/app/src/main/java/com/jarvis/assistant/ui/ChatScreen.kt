@@ -353,59 +353,110 @@ private fun StarkLabConsole(
     }
 }
 
-/** Every URL JARVIS has fetched — the visible half of the privacy contract. */
+/** Every URL JARVIS has fetched — the visible half of the privacy contract. Stark glass. */
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 private fun FetchLogSheet(onDismiss: () -> Unit) {
     val entries = ServiceLocator.web.accessSnapshot()
     val timeFmt = java.text.SimpleDateFormat("d MMM HH:mm", java.util.Locale.ENGLISH)
 
-    androidx.compose.material3.ModalBottomSheet(onDismissRequest = onDismiss) {
-        Column(Modifier.padding(horizontal = 20.dp)) {
-            Text(
-                "What left the phone",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = StarkIce,
-            )
-            Text(
-                "Every URL JARVIS fetched this session (newest last). Wake word, speech and the LLM never touch the network.",
-                style = MaterialTheme.typography.bodySmall,
-                color = StarkDim,
-            )
-            Spacer(Modifier.height(12.dp))
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.height(320.dp),
-            ) {
-                if (entries.isEmpty()) {
-                    item {
-                        Text(
-                            "nothing yet — offline or no web tools used",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = StarkDim,
-                        )
+    androidx.compose.material3.ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = StarkPanel,
+        contentColor = StarkIce,
+        shape = RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp),
+    ) {
+        Box {
+            HexGridOverlay(opacity = 0.04f)
+            Column(Modifier.padding(horizontal = 20.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(StarkCyan.copy(alpha = 0.12f))
+                            .border(0.7.dp, StarkCyan.copy(alpha = 0.24f), RoundedCornerShape(6.dp))
+                            .padding(horizontal = 7.dp, vertical = 3.dp),
+                    ) {
+                        Text("⬢ TELEMETRY", fontFamily = FontFamily.Monospace, fontSize = 9.sp, letterSpacing = 1.4.sp, color = StarkCyan)
+                    }
+                    Spacer(Modifier.weight(1f))
+                    Text("${entries.size} FETCHES", fontFamily = FontFamily.Monospace, fontSize = 10.sp, letterSpacing = 1.2.sp, color = StarkDim)
+                }
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "What left the phone",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = StarkIce,
+                    fontFamily = FontFamily.Monospace,
+                    letterSpacing = 0.6.sp,
+                )
+                Text(
+                    "Every URL JARVIS fetched this session (newest last). Wake word, speech and the LLM never touch the network.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = StarkDim,
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 11.sp,
+                    lineHeight = 15.sp,
+                )
+                Spacer(Modifier.height(10.dp))
+                Box(Modifier.fillMaxWidth().height(1.dp).background(StarkCyan.copy(alpha = 0.12f)))
+                Spacer(Modifier.height(10.dp))
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.height(320.dp),
+                ) {
+                    if (entries.isEmpty()) {
+                        item {
+                            Box(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(Color(0xFF0B1A2E).copy(alpha = 0.7f))
+                                    .border(1.dp, StarkCyan.copy(alpha = 0.10f), RoundedCornerShape(10.dp))
+                                    .padding(14.dp),
+                            ) {
+                                Text(
+                                    "NO TELEMETRY — OFFLINE OR NO WEB TOOLS USED",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = StarkDim,
+                                    fontFamily = FontFamily.Monospace,
+                                    fontSize = 11.sp,
+                                    letterSpacing = 0.8.sp,
+                                )
+                            }
+                        }
+                    }
+                    items(entries) { e ->
+                        val host = try {
+                            android.net.Uri.parse(e.url).host ?: e.url
+                        } catch (_: Exception) {
+                            e.url
+                        }
+                        Column(
+                            Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color(0xFF0B1A2E).copy(alpha = 0.78f))
+                                .border(1.dp, StarkCyan.copy(alpha = 0.10f), RoundedCornerShape(10.dp))
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                        ) {
+                            Text(host, style = MaterialTheme.typography.bodyMedium, color = StarkIce, fontFamily = FontFamily.Monospace, fontSize = 13.sp)
+                            Text(
+                                "${timeFmt.format(java.util.Date(e.timestamp))} · " +
+                                    "${if (e.fromCache) "FROM CACHE" else "NETWORK"} · " +
+                                    "${e.bytes / 1024} KB",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = StarkDim,
+                                fontFamily = FontFamily.Monospace,
+                                fontSize = 10.sp,
+                                letterSpacing = 0.6.sp,
+                            )
+                        }
                     }
                 }
-                items(entries) { e ->
-                    val host = try {
-                        android.net.Uri.parse(e.url).host ?: e.url
-                    } catch (_: Exception) {
-                        e.url
-                    }
-                    Column {
-                        Text(host, style = MaterialTheme.typography.bodyMedium, color = StarkIce)
-                        Text(
-                            "${timeFmt.format(java.util.Date(e.timestamp))} · " +
-                                "${if (e.fromCache) "from cache" else "network"} · " +
-                                "${e.bytes / 1024} KB",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = StarkDim,
-                        )
-                    }
-                }
+                Spacer(Modifier.height(20.dp))
             }
-            Spacer(Modifier.height(20.dp))
         }
     }
 }
