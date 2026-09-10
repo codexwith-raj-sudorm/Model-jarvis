@@ -329,6 +329,8 @@ private fun StarkLabConsole(
                 }
             }
 
+            // ---- Stark bench hairline ----
+            Box(Modifier.fillMaxWidth().height(1.dp).background(StarkCyan.copy(alpha = 0.08f)))
             // ---- input — pill + Stark border ----
             Row(
                 modifier = Modifier.fillMaxWidth().padding(12.dp),
