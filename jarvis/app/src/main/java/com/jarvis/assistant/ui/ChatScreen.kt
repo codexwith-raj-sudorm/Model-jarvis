@@ -179,21 +179,25 @@ private fun StarkLabConsole(
                             fontSize = 11.sp,
                         )
                     }
-                    DropdownMenu(expanded = modelMenuOpen, onDismissRequest = { modelMenuOpen = false }) {
+                    DropdownMenu(
+                        expanded = modelMenuOpen,
+                        onDismissRequest = { modelMenuOpen = false },
+                        modifier = Modifier.background(StarkPanel, RoundedCornerShape(12.dp)).border(1.dp, StarkCyan.copy(alpha = 0.12f), RoundedCornerShape(12.dp)),
+                    ) {
                         ServiceLocator.modelManager.list().forEach { model ->
                             DropdownMenuItem(
-                                text = { Text(model.name, fontFamily = FontFamily.Monospace, fontSize = 12.sp) },
+                                text = { Text(model.name, fontFamily = FontFamily.Monospace, fontSize = 12.sp, color = StarkIce) },
                                 onClick = { vm.switchModel(model); modelMenuOpen = false },
                             )
                         }
                         if (ServiceLocator.modelManager.list().isEmpty()) {
                             DropdownMenuItem(
-                                text = { Text("no model installed yet", fontSize = 12.sp) },
+                                text = { Text("no model installed yet", fontSize = 12.sp, color = StarkDim) },
                                 onClick = {},
                             )
                         }
                         DropdownMenuItem(
-                            text = { Text("⬇ download models…", fontSize = 12.sp) },
+                            text = { Text("⬇ download models…", fontSize = 12.sp, color = StarkCyan) },
                             onClick = { modelMenuOpen = false; showDownloader = true },
                         )
                     }
