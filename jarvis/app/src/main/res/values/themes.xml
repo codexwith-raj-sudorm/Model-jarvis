@@ -1,17 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Compose-only app: a plain framework dark theme is all we need here -->
     <style name="Theme.Jarvis" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/jarvis_bg</item>
         <item name="android:statusBarColor">@color/jarvis_bg</item>
         <item name="android:navigationBarColor">@color/jarvis_bg</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
     </style>
 
-    <!-- Translucent overlay used by the system-assistant gesture -->
+    <!-- Stark helmet HUD — translucent over whatever app was behind -->
     <style name="Theme.Jarvis.Assistant" parent="Theme.Jarvis">
         <item name="android:windowIsTranslucent">true</item>
-        <item name="android:windowBackground">#E60B1220</item>
+        <item name="android:windowBackground">#D6050A14</item>
         <item name="android:windowNoTitle">true</item>
         <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:windowContentOverlay">@null</item>
     </style>
 </resources>
