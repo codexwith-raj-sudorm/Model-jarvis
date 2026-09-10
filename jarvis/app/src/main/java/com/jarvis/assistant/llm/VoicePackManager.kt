@@ -1,6 +1,7 @@
 package com.jarvis.assistant.llm
 
 import android.content.Context
+import com.jarvis.assistant.speech.SherpaSttEngine
 import com.jarvis.assistant.speech.SherpaTtsEngine
 import com.jarvis.assistant.web.WebFetcher
 import kotlinx.coroutines.CancellationException
@@ -33,6 +34,8 @@ class VoicePackManager(
     private val fetcher: WebFetcher,
     /** Fired after a successful activation; swaps the live TTS engine. */
     private val onActivated: () -> Unit = {},
+    /** Fired after a successful ASR activation; swaps the live STT engine. */
+    private val onAsrActivated: () -> Unit = {},
 ) {
 
     data class VoiceEntry(
@@ -106,6 +109,65 @@ class VoicePackManager(
         ttsRoot().listFiles { f -> f.isDirectory }?.filter { SherpaTtsEngine.modelFilesPresent(it) }
             ?: emptyList()
 
+    // ---- ASR packs (the "ear") --------------------------------------------------
+
+    data class AsrEntry(
+        val id: String,
+        val dirName: String,
+        val title: String,
+        val langLabel: String,
+        val sizeLabel: String,
+        val url: String,
+    )
+
+    /** Streaming zipformer packs — layout verified against the sherpa docs. */
+    val asrCatalog = listOf(
+        AsrEntry(
+            id = "sherpa-onnx-streaming-zipformer-en-2023-06-26",
+            dirName = "sherpa-onnx-streaming-zipformer-en-2023-06-26",
+            title = "English — the default ear",
+            langLabel = "English",
+            sizeLabel = "~45 MB",
+            url = "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-streaming-zipformer-en-2023-06-26.tar.bz2",
+        ),
+        AsrEntry(
+            id = "sherpa-onnx-streaming-zipformer-bn-vosk-2026-02-09",
+            dirName = "sherpa-onnx-streaming-zipformer-bn-vosk-2026-02-09",
+            title = "বাংলা — Bengali streaming",
+            langLabel = "বাংলা",
+            sizeLabel = "~83 MB",
+            url = "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-streaming-zipformer-bn-vosk-2026-02-09.tar.bz2",
+        ),
+    )
+
+    private fun asrRoot(): File =
+        File(ModelManager.baseDir(context), "voice/asr")
+
+    private fun asrDir(entry: AsrEntry): File =
+        File(asrRoot(), entry.dirName)
+
+    fun isAsrInstalled(entry: AsrEntry): Boolean =
+        SherpaSttEngine.modelFilesPresent(asrDir(entry))
+
+    fun isActiveAsr(entry: AsrEntry): Boolean =
+        prefs().getString(PREF_ASR, null) == entry.dirName
+
+    /** One tap: remember the ear; a fresh STT engine picks it up. */
+    fun activateAsr(entry: AsrEntry) {
+        prefs().edit().putString(PREF_ASR, entry.dirName).apply()
+        onAsrActivated()
+    }
+
+    fun startAsr(entry: AsrEntry, onDone: (Boolean) -> Unit = {}) {
+        startCore(
+            key = entry.id,
+            url = entry.url,
+            into = asrRoot(),
+            installed = { isAsrInstalled(entry) },
+            onDone = onDone,
+        )
+    }
+
     /** The reply-language hint the Orchestrator adds to the system prompt. */
     fun activeReplyLang(): String {
         val dir = prefs().getString(PREF_VOICE, null) ?: return "auto"
@@ -117,36 +179,52 @@ class VoicePackManager(
      * IO dispatcher; hop threads before touching UI.
      */
     fun start(entry: VoiceEntry, onDone: (Boolean) -> Unit = {}) {
-        if (jobs[entry.id]?.isActive == true) return
-        val archive = File(context.cacheDir, entry.id + ".tar.bz2")
+        startCore(
+            key = entry.id,
+            url = entry.url,
+            into = ttsRoot(),
+            installed = { isInstalled(entry) },
+            onDone = onDone,
+        )
+    }
 
-        jobs[entry.id] = scope.launch {
+    private fun startCore(
+        key: String,
+        url: String,
+        into: File,
+        installed: () -> Boolean,
+        onDone: (Boolean) -> Unit,
+    ) {
+        if (jobs[key]?.isActive == true) return
+        val archive = File(context.cacheDir, key + ".tar.bz2")
+
+        jobs[key] = scope.launch {
             fun put(state: ModelDownloader.DownloadState) =
-                _states.update { it + (entry.id to state) }
+                _states.update { it + (key to state) }
 
-            put(ModelDownloader.DownloadState(entry.id, resumeBytes(archive), -1, ModelDownloader.Status.RUNNING))
+            put(ModelDownloader.DownloadState(key, resumeBytes(archive), -1, ModelDownloader.Status.RUNNING))
             try {
                 var lastTick = 0L
-                fetcher.download(entry.url, archive) { received, total ->
+                fetcher.download(url, archive) { received, total ->
                     val now = System.currentTimeMillis()
                     if (now - lastTick > 250 || (total > 0 && received >= total)) {
                         lastTick = now
-                        put(ModelDownloader.DownloadState(entry.id, received, total, ModelDownloader.Status.RUNNING))
+                        put(ModelDownloader.DownloadState(key, received, total, ModelDownloader.Status.RUNNING))
                     }
                 }
-                extractTarBz2(archive, ttsRoot())
+                extractTarBz2(archive, into)
                 archive.delete()
-                if (!isInstalled(entry)) throw IllegalStateException("archive did not contain a voice at ${entry.dirName}")
-                put(ModelDownloader.DownloadState(entry.id, 1, 1, ModelDownloader.Status.DONE))
+                if (!installed()) throw IllegalStateException("archive did not contain the expected model files")
+                put(ModelDownloader.DownloadState(key, 1, 1, ModelDownloader.Status.DONE))
                 onDone(true)
             } catch (e: CancellationException) {
-                put(ModelDownloader.DownloadState(entry.id, resumeBytes(archive), -1, ModelDownloader.Status.CANCELLED))
+                put(ModelDownloader.DownloadState(key, resumeBytes(archive), -1, ModelDownloader.Status.CANCELLED))
                 throw e
             } catch (e: Exception) {
-                put(ModelDownloader.DownloadState(entry.id, resumeBytes(archive), -1, ModelDownloader.Status.FAILED))
+                put(ModelDownloader.DownloadState(key, resumeBytes(archive), -1, ModelDownloader.Status.FAILED))
                 onDone(false)
             } finally {
-                jobs.remove(entry.id)
+                jobs.remove(key)
             }
         }
     }
@@ -202,5 +280,6 @@ class VoicePackManager(
     companion object {
         const val PREF_VOICE = "tts_voice"
         const val PREF_REPLY_LANG = "reply_lang"
+        const val PREF_ASR = "stt_model"
     }
 }
