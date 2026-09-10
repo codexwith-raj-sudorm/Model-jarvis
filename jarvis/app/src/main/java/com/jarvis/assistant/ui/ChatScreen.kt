@@ -174,9 +174,10 @@ private fun StarkLabConsole(
                         Text(
                             ui.modelName ?: "no model",
                             style = MaterialTheme.typography.labelMedium,
-                            color = StarkDim,
+                            color = if (ui.modelName != null) StarkCyanGlow else StarkDim,
                             fontFamily = FontFamily.Monospace,
                             fontSize = 11.sp,
+                            letterSpacing = 0.8.sp,
                         )
                     }
                     DropdownMenu(
