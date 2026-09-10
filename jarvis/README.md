@@ -99,7 +99,9 @@ adb push Qwen3-1.7B-Q4_K_M.gguf \
 # pushes into .../files/voice/{asr,tts,wake}/
 ```
 
-4. Launch **JARVIS** → pick your GGUF in the top bar → tap **👂** to arm the
+4. Launch **JARVIS** → pick your GGUF from the horizontal model-chip row
+   (or **⬇ LAB** to download/activate — the brain auto-loads on every start)
+   → tap **👂** to arm the
    wake word (grants the notification permission prompt on Android 13+).
    Now, from anywhere: *"Hey JARVIS"* → short vibration → voice overlay opens,
    mic listening → ask your question → spoken answer → mic re-opens.

@@ -21,8 +21,11 @@ question, and answers out loud. Three important things to know up front:
    search) — only from free, key-less sources, and only the URL goes out.
    You can flip it fully **offline** with one tap, and every URL it has
    fetched this session is visible in the 🛰 log.
-3. **Your voice is never uploaded.** Recognition, speech and answering all
-   run on-device.
+3. **With local voice packs installed, your voice is never uploaded.**
+   Recognition, speech and answering all run on-device. Until you install
+   them, JARVIS uses your phone's system speech engines — which *may* send
+   audio to the cloud — and it tells you so loudly (red banner +
+   `SYS·NET` in the telemetry) instead of hiding it.
 
 ## 2. Installing the app
 
@@ -43,14 +46,18 @@ question, and answers out loud. Three important things to know up front:
 
 ## 3. Giving JARVIS a brain (one time, 1–3 GB)
 
-1. In the top bar, tap the model name (it says **no model** at first), then
-   **⬇ download models…**. The **STARK LAB — SELECT PAYLOAD** dialog opens.
+1. In the top bar, tap **⬇ LAB**. The **STARK LAB — SELECT PAYLOAD** dialog
+   opens. (If your phone has no brain yet, a red line says
+   "NO BRAIN INSTALLED — TAP TO DOWNLOAD" — tap it and the same dialog opens.)
 2. Pick a model matching your phone (each row shows size and a RAM tier):
    - **Leaner / Q4 models** — 4–6 GB RAM phones.
    - **Mid-size** — 8 GB+ flagships, noticeably better answers.
    - Downloads are **resumable** — a dropped connection won't restart them.
-3. When the progress bar fills, tap **ACTIVATE**. The top-bar model name
-   lights up — that's the "brain loaded" state.
+3. When the progress bar fills, tap **ACTIVATE**. While it loads you'll see
+   a cyan **"◌ LOADING BRAIN …"** line (a big model on a modest phone can take
+   a few seconds the first time). When it's ready, its name appears as a lit
+   chip in the **horizontal model row** under the top bar — and JARVIS loads
+   that same brain **automatically every time you open the app**; no taps.
 
 > Wi-Fi is recommended. Models live in
 > `Android/data/com.jarvis.assistant/files/models/` on your storage.
@@ -66,8 +73,10 @@ Same dialog, two more sections:
   offline recognition for that language. The active pack shows on the
   telemetry line as `EAR:…`.
 
-Without any voice packs JARVIS still works: it silently uses the phone's
-system STT/TTS, and the wake word reuses whatever ASR is present.
+Without any voice packs JARVIS still works — but **not silently**: a red
+"SYSTEM VOICE IN USE — may run on the cloud" banner appears (tap **FIX →**
+to open the lab), and the telemetry line reads `STT:SYS·NET`. Install both a
+voice pack and an ears pack and it reads `STT:LOCAL · TTS:LOCAL`.
 
 ## 5. Talking to JARVIS
 
@@ -110,13 +119,16 @@ The status badge next to **J.A.R.V.I.S** tells you the state:
 | 🌐 **WEB LINK** / ✈ **OFFLINE** chip | On = JARVIS may fetch live facts (every fetch is logged). Off = *nothing* leaves the device. **On by default.** |
 | 🎧 **HANDS-FREE** chip | Auto-reopen the mic after each spoken answer. |
 | 👂 **WAKE** chip | Arm/disarm the "Hey JARVIS" wake word (battery-friendly by default — arming is deliberate). |
-| **Model name** (top bar) | Dropdown: switch between installed brains, or **⬇ download models…** |
+| **⬇ LAB** (top bar) | Opens STARK LAB — download brains, VOICE MATRIX and EAR MATRIX packs. |
+| **Model row** (under the chips, scrolls sideways) | One chip per installed brain — **the horizontal model list**. Tap a chip to switch brains (no dropdown, no collapse). |
+| **Brain status line** | Cyan "◌ LOADING BRAIN…" while it boots; red "⚠ BRAIN OFFLINE — TAP TO RETRY" on a failed load (tap it); red "⚠ NO BRAIN INSTALLED — TAP TO DOWNLOAD". |
+| **Voice banner** (red, when it appears) | "🌐 SYSTEM VOICE IN USE — may run on the cloud" + a **FIX →** button that opens the lab so you can install local ears/voice. |
 | 🛰 | The **fetch log** — every URL JARVIS retrieved this session. The visible half of the privacy contract. |
 | ■ (red, while THINKING) | Stop generating. |
 | ■ (while LISTENING) | Stop listening without sending. |
 | 🎤 | Open the mic. |
 | ➤ | Send the typed text. |
-| Telemetry line under the chips | Live status: engine · STT engine · TTS engine · active Ears pack. |
+| Telemetry line under the chips | Live status: engine · **STT** · **TTS** · active Ears pack. STT/TTS show **LOCAL** when the on-device sherpa engines are driving, or **SYS·NET** when they've fallen back to the phone's (possibly cloud) system speech. |
 
 ## 7. Daily briefing
 
@@ -136,7 +148,8 @@ remember about …?"*. Chat history likewise stays on-device (`jarvis.db`).
 | Symptom | Fix |
 |---|---|
 | *"I lack a brain, sir"* banner | Download a model (Section 3). |
-| No answer / silence | Check the model name in the top bar is lit; tap it → ACTIVATE the model you want. |
+| No answer / silence | Look at the **brain status line**: if it says *BRAIN OFFLINE — TAP TO RETRY*, tap it; if *NO BRAIN INSTALLED*, tap to download. JARVIS now tells you *why* it can't answer instead of staying quiet. |
+| First reply is slow (10–30 s) | One-time cost of reading the whole model off storage. Threading now scales with your device's cores and a failed load retries once automatically; a leaner Q4 model boots fastest. |
 | Wake word doesn't fire | Arm 👂; grant **notifications**; if flaky, it uses the heavier ASR fallback — arming consumes more battery (that's why it's off by default). |
 | Voice sounds robotic / system voice | Install a **VOICE MATRIX** pack (Section 4). |
 | Recognition misses you | Install an **EAR MATRIX** pack for your language (default is English). |
