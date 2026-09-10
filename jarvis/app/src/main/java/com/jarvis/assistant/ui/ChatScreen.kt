@@ -316,6 +316,13 @@ private fun StarkLabConsole(
                     shape = RoundedCornerShape(14.dp),
                     singleLine = false,
                     maxLines = 4,
+                    colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = StarkCyan.copy(alpha = 0.52f),
+                        unfocusedBorderColor = StarkDim.copy(alpha = 0.22f),
+                        cursorColor = StarkCyan,
+                        focusedTextColor = StarkIce,
+                        unfocusedTextColor = StarkIce,
+                    ),
                 )
                 Spacer(Modifier.size(8.dp))
                 if (ui.generating) {
@@ -738,6 +745,13 @@ private fun HelmetHUD(
                         shape = RoundedCornerShape(14.dp),
                         singleLine = false,
                         maxLines = 3,
+                        colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = StarkCyan.copy(alpha = 0.42f),
+                            unfocusedBorderColor = StarkDim.copy(alpha = 0.18f),
+                            cursorColor = StarkCyan,
+                            focusedTextColor = StarkIce,
+                            unfocusedTextColor = StarkIce,
+                        ),
                     )
                     Spacer(Modifier.size(8.dp))
                     Box(
