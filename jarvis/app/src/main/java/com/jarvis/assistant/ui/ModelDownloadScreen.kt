@@ -88,8 +88,10 @@ fun ModelDownloadDialog(onDismiss: () -> Unit) {
                 // Constrain the list to the dialog's real height — a fixed 360dp
                 // overflowed (and collapsed) on small screens / large fonts.
                 BoxWithConstraints {
-                    val adaptiveHeight = constraints.maxHeight * 0.55f
-                    val listHeight = if (adaptiveHeight < 360.dp) adaptiveHeight else 360.dp
+                    // Pure-Float math: the Dp * Float operator resolved to a
+                    // Float on this toolchain, so compare in float space.
+                    val adaptiveDp = constraints.maxHeight.value * 0.55f
+                    val listHeight = if (adaptiveDp < 360f) adaptiveDp.dp else 360.dp
                 Column {
                     Text(
                         "Wi-Fi recommended — downloads resume automatically. Models are brains, voice packs are voices — both holographically loaded, sir.",
