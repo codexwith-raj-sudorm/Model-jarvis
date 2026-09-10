@@ -14,9 +14,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.jarvis.assistant.ui.StarkCyan
 import com.jarvis.assistant.ui.StarkDim
@@ -186,3 +188,9 @@ fun Vignette(modifier: Modifier = Modifier) {
         )
     }
 }
+
+// ---------------------------------------------------------------------------
+// Stark blur helper — API31+ RenderEffect via Modifier.blur, else no-op
+// ---------------------------------------------------------------------------
+fun Modifier.starkBlur(radius: Dp = 14.dp): Modifier =
+    if (android.os.Build.VERSION.SDK_INT >= 31) this.blur(radius) else this
