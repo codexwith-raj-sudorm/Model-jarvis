@@ -241,11 +241,16 @@ private fun StarkLabConsole(
                 }
 
                 // telemetry line — MCU alt / rng style crud
+                // HYBRID-HOOK: ears-telemetry (lab) — active ASR pack from the merged P2 language packs
+                val earsLabel = ServiceLocator.voicePacks.asrCatalog
+                    .firstOrNull { ServiceLocator.voicePacks.isActiveAsr(it) }?.langLabel ?: "default"
                 Text(
                     buildString {
                         append(ui.engineStatus)
                         append("  ·  STT:${ui.sttName.ifBlank { "SYS" }}")
                         append("  ·  TTS:${ui.ttsName.ifBlank { "SYS" }}")
+                        // HYBRID-HOOK: ears-telemetry (lab — readout)
+                        append("  ·  EAR:$earsLabel")
                         append("  ·  RNG EL 97%")
                     },
                     fontFamily = FontFamily.Monospace,
@@ -671,6 +676,17 @@ private fun HelmetHUD(
                 }
 
                 // secondary telemetry — alt / rng mock like film
+                // HYBRID-HOOK: ears-telemetry (helmet) — active ASR pack from the merged P2 language packs
+                val earsLabel = ServiceLocator.voicePacks.asrCatalog
+                    .firstOrNull { ServiceLocator.voicePacks.isActiveAsr(it) }?.langLabel ?: "default"
+                Text(
+                    "EAR  ${earsLabel.uppercase()}",
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 8.5.sp,
+                    letterSpacing = 1.sp,
+                    color = StarkDim.copy(alpha = 0.65f),
+                    modifier = Modifier.padding(top = 2.dp),
+                )
                 Text(
                     "ALT  0.42  ·  MACH  0.00  ·  RNG EL  ·  PWR  97%",
                     fontFamily = FontFamily.Monospace,
