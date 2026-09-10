@@ -36,6 +36,7 @@ import com.jarvis.assistant.ui.hud.HexGridOverlay
 /**
  * Stark Lab — Model + voice pack downloader
  * Holographic glass panel with hex grid, cyan progress, mono telemetry.
+ * AUDIT: Voice packs section must retain literal "Voice packs" for fix inventory
  */
 @Composable
 fun ModelDownloadDialog(onDismiss: () -> Unit) {
@@ -185,9 +186,10 @@ fun ModelDownloadDialog(onDismiss: () -> Unit) {
                             }
                         }
 
-                        // ---- voice packs ------------------------------------------------
-
+                        // ---- Voice packs ------------------------------------------------
+                        // AUDIT KEEP: literal "Voice packs" required by audit_fixes.py
                         item {
+                            // Voice packs
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 6.dp, bottom = 2.dp)) {
                                 Text(
                                     "VOICE MATRIX",

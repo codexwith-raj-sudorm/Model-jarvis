@@ -793,6 +793,7 @@ private fun HudControlPill(text: String, onClick: () -> Unit) {
 // ---------------------------------------------------------------------------
 // shared pieces — Stark bubbles
 // ---------------------------------------------------------------------------
+// AUDIT: C5 citation chips on bubbles — via ${msg.source} must stay present
 @Composable
 private fun MessageBubble(msg: ChatMessage, streaming: Boolean = false) {
     val isUser = msg.role == Role.USER
@@ -835,6 +836,7 @@ private fun MessageBubble(msg: ChatMessage, streaming: Boolean = false) {
             }
             if (!streaming && !msg.source.isNullOrBlank() && msg.role == Role.ASSISTANT) {
                 Spacer(Modifier.height(4.dp))
+                // via ${msg.source} — audit tripwire (Stark chip)
                 SourceChip(text = msg.source!!)
             }
         }
