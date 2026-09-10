@@ -116,8 +116,8 @@ fun SourceChip(text: String, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(50))
-            .background(Color(0xFF0F1E33).copy(alpha = 0.9f))
-            .border(1.dp, StarkDim.copy(alpha = 0.35f), RoundedCornerShape(50))
+            .background(StarkCyan.copy(alpha = 0.08f))
+            .border(1.dp, StarkCyan.copy(alpha = 0.22f), RoundedCornerShape(50))
             .padding(horizontal = 9.dp, vertical = 4.dp),
     ) {
         Text(
@@ -125,7 +125,7 @@ fun SourceChip(text: String, modifier: Modifier = Modifier) {
             fontFamily = FontFamily.Monospace,
             fontSize = 10.sp,
             letterSpacing = 0.8.sp,
-            color = StarkDim,
+            color = StarkCyanGlow,
         )
     }
 }
