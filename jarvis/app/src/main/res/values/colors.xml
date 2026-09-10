@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="jarvis_bg">#0B1220</color>
-    <color name="jarvis_accent">#22D3EE</color>
+    <!-- Stark HUD — electric cyan + deep navy, MCU film-accurate -->
+    <color name="jarvis_bg">#050A14</color>
+    <color name="jarvis_accent">#00D9FF</color>
+    <color name="jarvis_cyan_glow">#52FEFE</color>
+    <color name="jarvis_panel">#0F1E33</color>
+    <color name="jarvis_dim">#7A8CA3</color>
 </resources>

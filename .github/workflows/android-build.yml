@@ -72,7 +72,7 @@ jobs:
             native-${{ runner.os }}-b10876-
 
       - name: "Unit tests (pure-JVM parsers, ranker, formatter, intents)"
-        run: ./gradlew testDebugUnitTest --stacktrace
+        run: ./gradlew testDebugUnitTest --stacktrace 2>&1 | tee ../test.log
 
       - name: Build debug APK (all ABIs)
         run: |
@@ -123,6 +123,7 @@ jobs:
         if: failure()
         run: |
           LOG=../build.log
+          TLOG=../test.log
           {
             echo "### ❌ Build failed — diagnostics (commit ${GITHUB_SHA:0:7})"
             if [ -f ../apk-list.txt ] && [ -s ../apk-list.txt ]; then
@@ -130,6 +131,12 @@ jobs:
             fi
             if [ -f ../builddir.txt ]; then
               echo "**Build dir dump:**"; echo '```'; head -150 ../builddir.txt; echo '```'
+            fi
+            if [ -f "$TLOG" ]; then
+              echo "**Unit test log tail:**"
+              echo '```'
+              sed 's/\x1b\[[0-9;]*m//g' "$TLOG" | tail -c 28000
+              echo '```'
             fi
             if [ -f "$LOG" ]; then
               echo "**Gradle log tail:**"

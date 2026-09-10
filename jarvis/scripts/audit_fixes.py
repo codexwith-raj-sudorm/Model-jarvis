@@ -199,7 +199,77 @@ FIXES = [
      "Bengali streaming ASR in catalog"),
     ("speech/SherpaSttEngine.kt", "fun activeAsrDir",
      "ASR dir resolution (pref/legacy/pack)"),
-]
+    # ---- Hybrid upgrade (Stark HUD x P2 backend) ------------------------------------
+    # Hybrid upgrade — Stark palette (Theme.kt)
+    ("ui/Theme.kt", "internal val StarkCyan = Color(0xFF00D9FF)",
+     "Stark cyan is electric #00D9FF (not teal)"),
+    ("ui/Theme.kt", "internal val StarkCyanGlow = Color(0xFF52FEFE)",
+     "Stark glow #52FEFE present"),
+    ("ui/Theme.kt", "internal val StarkCyanDeep = Color(0xFF073C4B)",
+     "Stark coil fill #073C4B present"),
+    ("ui/Theme.kt", "internal val StarkDeepSpace = Color(0xFF050A14)",
+     "Stark deep space #050A14 present"),
+    ("ui/Theme.kt", "internal val StarkPanel = Color(0xFF0F1E33)",
+     "Stark panel #0F1E33 present"),
+    ("ui/Theme.kt", "internal val StarkIce = Color(0xFFD6E4F0)",
+     "Stark ice text #D6E4F0 present"),
+    ("ui/Theme.kt", "internal val StarkDim = Color(0xFF7A8CA3)",
+     "Stark muted text #7A8CA3 present"),
+    ("ui/Theme.kt", "internal val StarkAlert = Color(0xFFFF3B30)",
+     "Stark alert red #FF3B30 present"),
+    ("ui/Theme.kt", "fun JarvisTheme(",
+     "Stark theme composable present"),
+
+    # Hybrid upgrade — HUD primitives
+    ("ui/hud/HudPrimitives.kt", "fun HexGridOverlay(",
+     "hex grid overlay primitive"),
+    ("ui/hud/HudPrimitives.kt", "fun ScanlinesOverlay(",
+     "scanlines overlay primitive"),
+    ("ui/hud/HudPrimitives.kt", "fun CornerBrackets(",
+     "corner bracket primitive"),
+    ("ui/hud/HudPrimitives.kt", "fun CompassStrip(",
+     "compass strip primitive"),
+    ("ui/hud/HudPrimitives.kt", "fun Vignette(",
+     "vignette primitive"),
+
+    # Hybrid upgrade — Stark components
+    ("ui/hud/StarkComponents.kt", "fun ToolChip(",
+     "ToolChip component present"),
+    ("ui/hud/StarkComponents.kt", "fun SourceChip(",
+     "SourceChip component present"),
+    ("ui/hud/StarkComponents.kt", "fun QuestionCard(",
+     "QuestionCard component present"),
+    ("ui/hud/StarkComponents.kt", "fun AnswerCard(",
+     "AnswerCard component present"),
+    ("ui/hud/StarkComponents.kt", "fun PartialTranscript(",
+     "PartialTranscript component present"),
+    ("ui/hud/StarkComponents.kt", "fun CoreWaveform(",
+     "CoreWaveform component present"),
+
+    # Hybrid upgrade — ears telemetry hooks (merge/hybrid-stark-hooks.py)
+    ("ui/ChatScreen.kt", "HYBRID-HOOK: ears-telemetry (lab)",
+     "hybrid hook: lab ears declaration"),
+    ("ui/ChatScreen.kt", 'append("  ·  EAR:$earsLabel")',
+     "hybrid hook: EAR segment in lab telemetry"),
+    ("ui/ChatScreen.kt", "HYBRID-HOOK: ears-telemetry (helmet)",
+     "hybrid hook: helmet ears readout"),
+
+    # Hybrid upgrade — Ears section in the Stark downloader
+    ("ui/ModelDownloadScreen.kt", "items(packs.asrCatalog)",
+     "Ears section lists the ASR catalog"),
+    ("ui/ModelDownloadScreen.kt", "packs.startAsr(entry)",
+     "Ears download path wired"),
+    ("ui/ModelDownloadScreen.kt", "packs.activateAsr(entry)",
+     "Ears activation path wired"),
+    ("ui/ModelDownloadScreen.kt", "packs.isAsrInstalled(entry)",
+     "Ears installed check wired"),
+    ("ui/ModelDownloadScreen.kt", "packs.isActiveAsr(entry)",
+     "Ears active state wired"),
+    ("ui/ModelDownloadScreen.kt", '"EAR MATRIX"',
+     "Stark EAR MATRIX header present"),
+    ("ui/ModelDownloadScreen.kt", "Ears — speech recognition",
+     "Ears section literal retained"),
+    ]
 
 # Patterns that must NOT be present (regression tripwires)
 BANNED = [
