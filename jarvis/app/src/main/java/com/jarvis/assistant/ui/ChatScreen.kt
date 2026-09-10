@@ -28,6 +28,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -119,7 +121,6 @@ private fun StarkLabConsole(
     messages: List<ChatMessage>,
 ) {
     var input by remember { mutableStateOf("") }
-    var modelMenuOpen by remember { mutableStateOf(false) }
     var showDownloader by remember { mutableStateOf(false) }
     var showFetchLog by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
@@ -170,36 +171,14 @@ private fun StarkLabConsole(
                     TextButton(onClick = { showFetchLog = true }) {
                         Text("🛰", style = MaterialTheme.typography.labelMedium)
                     }
-                    TextButton(onClick = { modelMenuOpen = true }) {
+                    TextButton(onClick = { showDownloader = true }) {
                         Text(
-                            ui.modelName ?: "no model",
+                            "⬇ LAB",
                             style = MaterialTheme.typography.labelMedium,
-                            color = if (ui.modelName != null) StarkCyanGlow else StarkDim,
+                            color = StarkCyan,
                             fontFamily = FontFamily.Monospace,
                             fontSize = 11.sp,
                             letterSpacing = 0.8.sp,
-                        )
-                    }
-                    DropdownMenu(
-                        expanded = modelMenuOpen,
-                        onDismissRequest = { modelMenuOpen = false },
-                        modifier = Modifier.background(StarkPanel, RoundedCornerShape(12.dp)).border(1.dp, StarkCyan.copy(alpha = 0.12f), RoundedCornerShape(12.dp)),
-                    ) {
-                        ServiceLocator.modelManager.list().forEach { model ->
-                            DropdownMenuItem(
-                                text = { Text(model.name, fontFamily = FontFamily.Monospace, fontSize = 12.sp, color = StarkIce) },
-                                onClick = { vm.switchModel(model); modelMenuOpen = false },
-                            )
-                        }
-                        if (ServiceLocator.modelManager.list().isEmpty()) {
-                            DropdownMenuItem(
-                                text = { Text("no model installed yet", fontSize = 12.sp, color = StarkDim) },
-                                onClick = {},
-                            )
-                        }
-                        DropdownMenuItem(
-                            text = { Text("⬇ download models…", fontSize = 12.sp, color = StarkCyan) },
-                            onClick = { modelMenuOpen = false; showDownloader = true },
                         )
                     }
                 }
@@ -240,6 +219,99 @@ private fun StarkLabConsole(
                     WakeChip(vm, ui)
                 }
 
+                // ---- brain status: visible + tappable (was a 9sp line nobody saw) ----
+                when (val brain = ui.modelState) {
+                    com.jarvis.assistant.chat.ChatViewModel.ModelState.LOADING ->
+                        Text(
+                            "◌ LOADING BRAIN — ${ui.modelName ?: ""} (first load takes a few seconds)",
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 10.sp,
+                            letterSpacing = 0.6.sp,
+                            color = StarkCyanGlow,
+                            modifier = Modifier.padding(top = 6.dp),
+                        )
+                    com.jarvis.assistant.chat.ChatViewModel.ModelState.FAILED ->
+                        Text(
+                            "⚠ BRAIN OFFLINE — TAP TO RETRY",
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 10.sp,
+                            letterSpacing = 0.6.sp,
+                            color = StarkAlert,
+                            modifier = Modifier
+                                .padding(top = 6.dp)
+                                .clickable { vm.retryModelLoad() },
+                        )
+                    com.jarvis.assistant.chat.ChatViewModel.ModelState.NONE ->
+                        Text(
+                            "⚠ NO BRAIN INSTALLED — TAP TO DOWNLOAD",
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 10.sp,
+                            letterSpacing = 0.6.sp,
+                            color = StarkAlert,
+                            modifier = Modifier
+                                .padding(top = 6.dp)
+                                .clickable { showDownloader = true },
+                        )
+                    com.jarvis.assistant.chat.ChatViewModel.ModelState.READY -> {}
+                }
+
+                // ---- installed brains: horizontal chip row (was a vertical dropdown) ----
+                val installedModels = ServiceLocator.modelManager.list()
+                if (installedModels.isNotEmpty()) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier
+                            .padding(top = 6.dp)
+                            .horizontalScroll(rememberScrollState()),
+                    ) {
+                        installedModels.forEach { m ->
+                            val selected = m.name == ui.modelName
+                            FilterChip(
+                                selected = selected,
+                                onClick = { vm.switchModel(m) },
+                                label = { Text(m.name, fontFamily = FontFamily.Monospace, fontSize = 9.sp) },
+                                colors = androidx.compose.material3.FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = StarkCyan.copy(alpha = 0.22f),
+                                    selectedLabelColor = StarkCyanGlow,
+                                    containerColor = StarkPanel.copy(alpha = 0.62f),
+                                    labelColor = StarkDim,
+                                ),
+                                border = androidx.compose.material3.FilterChipDefaults.filterChipBorder(
+                                    borderColor = if (selected) StarkCyan.copy(alpha = 0.5f) else StarkDim.copy(alpha = 0.22f),
+                                    selectedBorderColor = StarkCyan.copy(alpha = 0.5f),
+                                    enabled = true,
+                                    selected = selected,
+                                ),
+                            )
+                        }
+                    }
+                }
+
+                // ---- local-vs-cloud voice: no silent fallbacks ----
+                if (ui.sttName.contains("system", true) || ui.ttsName.contains("system", true)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 6.dp)) {
+                        Text(
+                            "🌐 SYSTEM VOICE IN USE — may run on the cloud",
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 9.sp,
+                            letterSpacing = 0.5.sp,
+                            color = StarkAlert,
+                        )
+                        Spacer(Modifier.size(8.dp))
+                        Text(
+                            "FIX →",
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 9.sp,
+                            color = StarkCyan,
+                            modifier = Modifier
+                                .padding(horizontal = 8.dp, vertical = 3.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(StarkCyan.copy(alpha = 0.12f))
+                                .clickable { showDownloader = true },
+                        )
+                    }
+                }
+
                 // telemetry line — MCU alt / rng style crud
                 // HYBRID-HOOK: ears-telemetry (lab) — active ASR pack from the merged P2 language packs
                 val earsLabel = ServiceLocator.voicePacks.asrCatalog
@@ -247,8 +319,8 @@ private fun StarkLabConsole(
                 Text(
                     buildString {
                         append(ui.engineStatus)
-                        append("  ·  STT:${ui.sttName.ifBlank { "SYS" }}")
-                        append("  ·  TTS:${ui.ttsName.ifBlank { "SYS" }}")
+                        append("  ·  STT:${if (ui.sttName.contains("sherpa", true)) "LOCAL" else "SYS·NET"}")
+                        append("  ·  TTS:${if (ui.ttsName.contains("sherpa", true)) "LOCAL" else "SYS·NET"}")
                         // HYBRID-HOOK: ears-telemetry (lab — readout)
                         append("  ·  EAR:$earsLabel")
                         append("  ·  RNG EL 97%")

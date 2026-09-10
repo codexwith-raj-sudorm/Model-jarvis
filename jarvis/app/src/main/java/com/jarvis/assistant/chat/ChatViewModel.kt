@@ -25,9 +25,12 @@ import kotlinx.coroutines.launch
  */
 class ChatViewModel(private val appContext: Context) {
 
+    enum class ModelState { NONE, LOADING, READY, FAILED }
+
     data class UiState(
         val engineStatus: String = "no model loaded",
         val modelName: String? = null,
+        val modelState: ModelState = ModelState.NONE,
         val generating: Boolean = false,
         val partialReply: String = "",
         val toolStatus: String? = null,
@@ -65,41 +68,91 @@ class ChatViewModel(private val appContext: Context) {
 
     // ---- model lifecycle -----------------------------------------------------
 
-    /** Loads the active (or only) GGUF once, off the UI thread. */
-    fun loadModelIfIdle() {
+    /**
+     * Decode threads — one per core, up to 8. The old hard-coded 4 oversubscribed
+     * small cores on big.LITTLE chips and left big cores idle on 8-core phones.
+     */
+    private val decodeThreads: Int
+        get() = Runtime.getRuntime().availableProcessors().coerceIn(1, 8)
+
+    private var loadRetryArmed = true
+
+    /**
+     * Loads the active (or largest) GGUF automatically — every app start,
+     * no taps required. Failures are VISIBLE (modelState = FAILED) and can be
+     * tapped to retry; one automatic retry fires after a short pause, because
+     * the first cold read of a multi-GB file on some storages is slow.
+     */
+    fun loadModelIfIdle(force: Boolean = false) {
         val engine = ServiceLocator.engine
-        if (engine.isLoaded()) return
-        val model = ServiceLocator.modelManager.activeModel()
-        if (model == null) {
-            _state.update { it.copy(engineStatus = "no model — run scripts/get_models.sh") }
+        if (engine.isLoaded()) {
+            _state.update { it.copy(modelState = ModelState.READY) }
             return
         }
-        _state.update { it.copy(engineStatus = "loading ${model.name}…", modelName = model.name) }
+        val model = ServiceLocator.modelManager.activeModel()
+        if (model == null) {
+            _state.update {
+                it.copy(
+                    engineStatus = "no brain installed — tap ⬇ LAB to download one",
+                    modelState = ModelState.NONE,
+                )
+            }
+            return
+        }
+        if (!force && _state.value.modelState == ModelState.LOADING) return
+        _state.update {
+            it.copy(engineStatus = "loading ${model.name}…", modelName = model.name, modelState = ModelState.LOADING)
+        }
         scope.launch(Dispatchers.IO) {
-            val ok = engine.load(model.absolutePath, CTX_LEN, THREADS)
+            val ok = engine.load(model.absolutePath, CTX_LEN, decodeThreads)
             if (ok) {
                 ServiceLocator.orchestrator.template = ChatTemplate.forModelFile(model.name)
-                _state.update { it.copy(engineStatus = "ready · ${model.name}") }
+                _state.update {
+                    it.copy(engineStatus = "ready · ${model.name}", modelState = ModelState.READY)
+                }
+            } else if (loadRetryArmed) {
+                loadRetryArmed = false
+                _state.update { it.copy(engineStatus = "load hiccup — retrying ${model.name}…") }
+                kotlinx.coroutines.delay(1500)
+                if (!engine.isLoaded()) loadModelIfIdle(force = true)
             } else {
-                _state.update { it.copy(engineStatus = "failed to load ${model.name}") }
+                _state.update {
+                    it.copy(engineStatus = "failed to load ${model.name}", modelState = ModelState.FAILED)
+                }
             }
         }
+    }
+
+    /** Tap-to-retry when the brain failed to come up. */
+    fun retryModelLoad() {
+        loadRetryArmed = true
+        loadModelIfIdle(force = true)
     }
 
     /** Model picker: warm-swap the GGUF (unload → load → re-template). */
     fun switchModel(file: java.io.File) {
         if (_state.value.modelName == file.name && ServiceLocator.engine.isLoaded()) return
         scope.launch(Dispatchers.IO) {
-            _state.update { it.copy(engineStatus = "switching to ${file.name}…") }
+            _state.update {
+                it.copy(
+                    engineStatus = "switching to ${file.name}…",
+                    modelName = file.name,
+                    modelState = ModelState.LOADING,
+                )
+            }
             ServiceLocator.engine.stopGenerate()
             ServiceLocator.engine.unload()
-            val ok = ServiceLocator.engine.load(file.absolutePath, CTX_LEN, THREADS)
+            val ok = ServiceLocator.engine.load(file.absolutePath, CTX_LEN, decodeThreads)
             if (ok) {
                 ServiceLocator.modelManager.setActive(file)
                 ServiceLocator.orchestrator.template = ChatTemplate.forModelFile(file.name)
-                _state.update { it.copy(engineStatus = "ready · ${file.name}", modelName = file.name) }
+                _state.update {
+                    it.copy(engineStatus = "ready · ${file.name}", modelState = ModelState.READY)
+                }
             } else {
-                _state.update { it.copy(engineStatus = "failed to load ${file.name}") }
+                _state.update {
+                    it.copy(engineStatus = "failed to load ${file.name}", modelState = ModelState.FAILED)
+                }
             }
         }
     }
@@ -130,6 +183,20 @@ class ChatViewModel(private val appContext: Context) {
 
         generationJob = scope.launch(Dispatchers.Default) {
             try {
+                // Brain guard: never route a turn into an empty engine — it
+                // used to look like "nothing works" (silent, no reply).
+                if (!ServiceLocator.engine.isLoaded()) {
+                    val msg = when (_state.value.modelState) {
+                        ModelState.LOADING ->
+                            "Still warming up my brain, sir — give it a few seconds."
+                        ModelState.FAILED ->
+                            "My brain failed to load. Tap the red status line to retry, or open ⬇ LAB."
+                        else ->
+                            "I have no brain installed, sir. Open ⬇ LAB and download one — they live entirely on this phone."
+                    }
+                    ServiceLocator.chatLog.add(Role.ASSISTANT, msg)
+                    return@launch
+                }
                 _state.update { it.copy(generating = true, partialReply = "", toolStatus = null) }
                 val toolContext = ToolContext(
                     appContext = appContext,

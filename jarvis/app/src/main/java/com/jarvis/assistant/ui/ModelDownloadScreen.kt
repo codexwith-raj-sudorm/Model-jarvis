@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -84,6 +85,13 @@ fun ModelDownloadDialog(onDismiss: () -> Unit) {
             Box {
                 // subtle hex behind list
                 HexGridOverlay(opacity = 0.04f)
+                // Constrain the list to the dialog's real height — a fixed 360dp
+                // overflowed (and collapsed) on small screens / large fonts.
+                BoxWithConstraints {
+                    // maxHeight is a Float on this toolchain — compare in float
+                    // space and convert to Dp at the end.
+                    val adaptivePx = constraints.maxHeight * 0.55f
+                    val listHeight = if (adaptivePx < 360f) adaptivePx.dp else 360.dp
                 Column {
                     Text(
                         "Wi-Fi recommended — downloads resume automatically. Models are brains, voice packs are voices — both holographically loaded, sir.",
@@ -104,7 +112,7 @@ fun ModelDownloadDialog(onDismiss: () -> Unit) {
                     Spacer(Modifier.height(10.dp))
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(14.dp),
-                        modifier = Modifier.height(360.dp),
+                        modifier = Modifier.height(listHeight),
                     ) {
                         items(downloader.catalog) { entry ->
                             val state = states[entry.fileName]
@@ -417,6 +425,7 @@ fun ModelDownloadDialog(onDismiss: () -> Unit) {
                             }
                         }
                     }
+                }
                 }
             }
         },
