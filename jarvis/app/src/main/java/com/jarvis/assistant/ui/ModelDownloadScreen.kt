@@ -198,6 +198,55 @@ fun ModelDownloadDialog(onDismiss: () -> Unit) {
                             }
                         }
                     }
+
+                    // ---- ears (ASR packs) --------------------------------------------
+
+                    item {
+                        Text(
+                            "Ears — speech recognition",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(top = 6.dp),
+                        )
+                    }
+                    items(packs.asrCatalog) { entry ->
+                        val state = voiceStates[entry.id]
+                        val installed = packs.isAsrInstalled(entry)
+                        val active = packs.isActiveAsr(entry)
+
+                        Column {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Column(Modifier.weight(1f)) {
+                                    Text(
+                                        entry.title,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                    )
+                                    Text(
+                                        "${entry.langLabel} · ${entry.sizeLabel}" +
+                                            if (active) " · ● active" else "",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                                when {
+                                    state?.status == ModelDownloader.Status.RUNNING ->
+                                        TextButton(onClick = { packs.cancel(entry.id) }) {
+                                            Text("cancel")
+                                        }
+                                    installed && active -> {}
+                                    installed ->
+                                        TextButton(onClick = { packs.activateAsr(entry) }) {
+                                            Text("activate")
+                                        }
+                                    else ->
+                                        TextButton(onClick = { packs.startAsr(entry) }) {
+                                            Text("download")
+                                        }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         },
