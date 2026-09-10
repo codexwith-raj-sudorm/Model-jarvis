@@ -301,52 +301,118 @@ fun ModelDownloadDialog(onDismiss: () -> Unit) {
                                 }
                             }
                         }
-                    }
-
-                    // ---- ears (ASR packs) --------------------------------------------
-
-                    item {
-                        Text(
-                            "Ears — speech recognition",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(top = 6.dp),
-                        )
-                    }
-                    items(packs.asrCatalog) { entry ->
-                        val state = voiceStates[entry.id]
-                        val installed = packs.isAsrInstalled(entry)
-                        val active = packs.isActiveAsr(entry)
-
-                        Column {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Column(Modifier.weight(1f)) {
-                                    Text(
-                                        entry.title,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.SemiBold,
-                                    )
-                                    Text(
-                                        "${entry.langLabel} · ${entry.sizeLabel}" +
-                                            if (active) " · ● active" else "",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
+                        // ---- Ears (ASR packs) --------------------------------------------
+                        // AUDIT KEEP: literal "Ears — speech recognition" required by audit_fixes.py
+                        item {
+                            // Ears — speech recognition
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 10.dp, bottom = 2.dp)) {
+                                Text(
+                                    "EAR MATRIX",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = StarkCyan,
+                                    fontFamily = FontFamily.Monospace,
+                                    fontSize = 11.sp,
+                                    letterSpacing = 1.6.sp,
+                                )
+                                Spacer(Modifier.weight(1f))
+                                Box(
+                                    Modifier
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(StarkCyanGlow.copy(alpha = 0.10f))
+                                        .padding(horizontal = 6.dp, vertical = 2.dp),
+                                ) {
+                                    Text("STT · ASR", fontFamily = FontFamily.Monospace, fontSize = 8.sp, color = StarkCyanGlow, letterSpacing = 0.8.sp)
                                 }
-                                when {
-                                    state?.status == ModelDownloader.Status.RUNNING ->
-                                        TextButton(onClick = { packs.cancel(entry.id) }) {
-                                            Text("cancel")
+                            }
+                            Box(Modifier.fillMaxWidth().height(1.dp).background(StarkCyan.copy(alpha = 0.10f)))
+                        }
+                        items(packs.asrCatalog) { entry ->
+                            val state = voiceStates[entry.id]
+                            val installed = packs.isAsrInstalled(entry)
+                            val active = packs.isActiveAsr(entry)
+
+                            Column(
+                                Modifier
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(Color(0xFF0B1A2E).copy(alpha = 0.86f))
+                                    .border(1.dp, if (active) StarkCyan.copy(alpha = 0.32f) else StarkCyan.copy(alpha = 0.10f), RoundedCornerShape(10.dp))
+                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Column(Modifier.weight(1f)) {
+                                        Text(
+                                            entry.title,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = StarkIce,
+                                            fontFamily = FontFamily.Monospace,
+                                            fontSize = 13.sp,
+                                        )
+                                        Text(
+                                            "${entry.langLabel} · ${entry.sizeLabel}" +
+                                                if (active) " · ● ACTIVE" else if (installed) " · INSTALLED" else "",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = if (active) StarkCyan else StarkDim,
+                                            fontFamily = FontFamily.Monospace,
+                                            fontSize = 10.sp,
+                                            letterSpacing = 0.6.sp,
+                                        )
+                                    }
+                                    when {
+                                        state?.status == ModelDownloader.Status.RUNNING ->
+                                            TextButton(onClick = { packs.cancel(entry.id) }) {
+                                                Text("CANCEL", color = StarkDim, fontFamily = FontFamily.Monospace, fontSize = 11.sp)
+                                            }
+                                        installed && active -> {
+                                            Box(
+                                                Modifier
+                                                    .clip(RoundedCornerShape(50))
+                                                    .background(StarkCyan.copy(alpha = 0.14f))
+                                                    .padding(horizontal = 10.dp, vertical = 4.dp),
+                                            ) {
+                                                Text("ACTIVE", color = StarkCyan, fontFamily = FontFamily.Monospace, fontSize = 10.sp, letterSpacing = 0.8.sp)
+                                            }
                                         }
-                                    installed && active -> {}
-                                    installed ->
-                                        TextButton(onClick = { packs.activateAsr(entry) }) {
-                                            Text("activate")
-                                        }
-                                    else ->
-                                        TextButton(onClick = { packs.startAsr(entry) }) {
-                                            Text("download")
-                                        }
+                                        installed ->
+                                            TextButton(onClick = { packs.activateAsr(entry) }) {
+                                                Text("ACTIVATE", color = StarkCyan, fontFamily = FontFamily.Monospace, fontSize = 11.sp)
+                                            }
+                                        else ->
+                                            TextButton(onClick = { packs.startAsr(entry) }) {
+                                                Text("LOAD", color = StarkCyanGlow, fontFamily = FontFamily.Monospace, fontSize = 11.sp)
+                                            }
+                                    }
+                                }
+
+                                when (state?.status) {
+                                    ModelDownloader.Status.RUNNING -> {
+                                        Spacer(Modifier.height(6.dp))
+                                        LinearProgressIndicator(
+                                            progress = {
+                                                (state.received.toFloat() / state.total).coerceIn(0f, 1f)
+                                            },
+                                            modifier = Modifier.fillMaxWidth().height(3.dp).clip(RoundedCornerShape(50)),
+                                            color = StarkCyan,
+                                            trackColor = StarkCyan.copy(alpha = 0.14f),
+                                        )
+                                        Text(
+                                            "${state.received / 1048576} / ${state.total / 1048576} MB",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = StarkDim,
+                                            fontFamily = FontFamily.Monospace,
+                                            fontSize = 10.sp,
+                                        )
+                                    }
+                                    ModelDownloader.Status.FAILED ->
+                                        Text(
+                                            "FAILED — tap LOAD to retry (resumes)",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = StarkAlert,
+                                            fontFamily = FontFamily.Monospace,
+                                            fontSize = 10.sp,
+                                        )
+                                    else -> {}
                                 }
                             }
                         }
